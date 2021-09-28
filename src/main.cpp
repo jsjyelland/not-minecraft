@@ -22,8 +22,7 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define WORLD_XLIM 5
-#define WORLD_ZLIM 5
+#define RENDER_DISTANCE 3
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
@@ -249,12 +248,9 @@ int main() {
     // Texture
 
     stbi_set_flip_vertically_on_load(true);
-
-    printf("loaded textures\n");
-
     unsigned int atlas = loadTexture("textures/atlas.png");
-    
-    // Vertex data
+
+    // Chunk map
 
     ChunkMap chunkMap;
 
@@ -303,16 +299,16 @@ int main() {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, atlas);
 
-        int chunkX = 0;//cameraPos.x / 16;
-        int chunkY = 0;//cameraPos.z / 16;
+        int chunkX = cameraPos.x / 16;
+        int chunkZ = cameraPos.z / 16;
 
-        for (int i = chunkX - 3; i < chunkX + 3; i++) {
-            for (int j = chunkY - 3; j < chunkY + 3; j++) {
-                glm::mat4 model = ChunkMap::chunkModelMat(i, j);
+        for (int i = chunkX - RENDER_DISTANCE; i < chunkX + RENDER_DISTANCE; i++) {
+            for (int k = chunkZ - RENDER_DISTANCE; k < chunkZ + RENDER_DISTANCE; k++) {
+                glm::mat4 model = ChunkMap::chunkModelMat(i, k);
                 shader.setMat4("model", model);
 
-                glBindVertexArray(chunkMap.chunkVAO(i, j));
-                glDrawArrays(GL_TRIANGLES, 0, chunkMap.numVertices(i, j));
+                glBindVertexArray(chunkMap.chunkVAO(i, k));
+                glDrawArrays(GL_TRIANGLES, 0, chunkMap.numVertices(i, k));
                 glBindVertexArray(0);
             }
         }

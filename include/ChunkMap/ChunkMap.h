@@ -17,21 +17,23 @@
 #include <Block/Block.h>
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 64
+#define CHUNK_HEIGHT 256
 
 class ChunkMap {
 public:
     ChunkMap();
 
-    void render(int x, int y);
-    unsigned int chunkVAO(int x, int y);
-    unsigned int numVertices(int x, int y);
+    void render(int x, int z);
+    unsigned int chunkVAO(int x, int z);
+    unsigned int numVertices(int x, int z);
 
-    static glm::mat4 chunkModelMat(int x, int y);
+    static glm::mat4 chunkModelMat(int x, int z);
 
 private:
     std::map<std::vector<int>, unsigned int> VAOmap;
     std::map<std::vector<int>, unsigned int> vertexNumMap;
+
+    BlockType getBlockType(int x, int y, int z);
 };
 
 #endif
