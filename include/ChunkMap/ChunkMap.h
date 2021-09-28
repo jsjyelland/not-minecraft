@@ -17,7 +17,7 @@
 #include <Block/Block.h>
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 256
+#define CHUNK_HEIGHT 128
 
 class ChunkMap {
 public:
@@ -32,6 +32,7 @@ public:
 private:
     std::map<std::vector<int>, unsigned int> VAOmap;
     std::map<std::vector<int>, unsigned int> vertexNumMap;
+    std::map<std::vector<int>, unsigned int> heightMap;
 
     BlockType getBlockType(int x, int y, int z);
 };

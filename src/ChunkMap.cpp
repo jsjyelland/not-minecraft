@@ -16,8 +16,6 @@ void ChunkMap::render(int x, int z) {
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 288 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT, NULL, GL_STATIC_DRAW);
-
     size_t verticesSize;
     float* vertices;
 
@@ -26,7 +24,9 @@ void ChunkMap::render(int x, int z) {
     int chunkOffsetX = x * CHUNK_SIZE;
     int chunkOffsetZ = z * CHUNK_SIZE;
 
-    // Iterate through the chunk
+    std::vector<float> verticesVector;
+
+    // Generate meshes
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int k = 0; k < CHUNK_SIZE; k++) {
             for (int j = 0; j < CHUNK_HEIGHT; j++) {
@@ -67,13 +67,17 @@ void ChunkMap::render(int x, int z) {
                 if (directionMask) {
                     vertices = Block::constructMesh(type, i, j, k, directionMask, &verticesSize);
 
-                    glBufferSubData(GL_ARRAY_BUFFER, numVertices * 8 * sizeof(float), verticesSize, vertices);
+                    verticesVector.insert(verticesVector.end(), vertices, vertices + verticesSize / sizeof(float));                  
 
                     numVertices += verticesSize / (8 * sizeof(float));
                 }
             }
         }
     }
+    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * numVertices, verticesVector.data(), GL_STATIC_DRAW);
+
+    verticesVector.clear();
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -99,7 +103,7 @@ unsigned int ChunkMap::chunkVAO(int x, int z) {
     std::vector<int> vect;
     vect = {x, z};
 
-    if (VAOmap.find(vect) == VAOmap.end()) {
+    if (!VAOmap.count(vect)) {
         render(x, z);
     }
 
@@ -129,7 +133,26 @@ glm::mat4 ChunkMap::chunkModelMat(int x, int z) {
 }
 
 BlockType ChunkMap::getBlockType(int x, int y, int z) {
-    int height = (int)((perlin(x, z, 0.01, 2) - 0.2) * (float)CHUNK_HEIGHT);
+    // std::vector<int> vect;
+    // vect = {x, z};
+
+    int height;
+
+    // if (heightMap.count(vect) == 0) {
+        height = (int)((perlin(x, z, 0.01, 2) - 0.2) * (float)CHUNK_HEIGHT);
+
+        if (height < 0) {
+            height = 0;
+        }
+
+        if (height > CHUNK_HEIGHT) {
+            height = CHUNK_HEIGHT;
+        }
+
+    //     heightMap.insert(std::pair<std::vector<int>, unsigned int>(vect, (unsigned int)height));
+    // } else {
+    //     height = heightMap[vect];
+    // }
 
     BlockType type;
 

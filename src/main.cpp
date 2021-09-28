@@ -22,7 +22,7 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 3
+#define RENDER_DISTANCE 10
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
@@ -224,6 +224,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         printf("Failed to initialise GLAD");
@@ -260,6 +261,10 @@ int main() {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        
+        float fps = 1 / deltaTime;
+
+        std::cout << "FPS:" << fps << std::endl;
 
         processInput(window);
 
