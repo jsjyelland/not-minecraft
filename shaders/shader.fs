@@ -1,14 +1,14 @@
 #version 330 core
 
 struct Material {
-   samplerCube diffuse;
-   samplerCube specular;
-   samplerCube emission;
+   sampler2D diffuse;
+   sampler2D specular;
+   sampler2D emission;
 
    float shininess;
 };
 
-in vec3 TexCoords;
+in vec2 TexCoords;
 
 // Lighting Structs
 
@@ -33,9 +33,6 @@ struct PointLight {
    float quadratic;
 };
 
-#define NR_POINT_LIGHTS 4
-uniform PointLight pointLights[NR_POINT_LIGHTS];
-
 out vec4 FragColor;
 
 in vec3 FragPos;
@@ -49,11 +46,11 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main() {
-   // vec3 norm = normalize(Normal);
-   // vec3 viewDir = normalize(viewPos - FragPos);
+   vec3 norm = normalize(Normal);
+   vec3 viewDir = normalize(viewPos - FragPos);
 
-   // vec3 result = calcDirLight(dirLight, norm, viewDir);
-   vec3 result = vec3(texture(material.diffuse, TexCoords));
+   vec3 result = calcDirLight(dirLight, norm, viewDir);
+   // vec3 result = vec3(texture(material.diffuse, TexCoords / 16.0));
 
    // for (int i = 0; i < NR_POINT_LIGHTS; i++) {
    //    result += calcPointLight(pointLights[i], norm, FragPos, viewDir);
