@@ -8,33 +8,23 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/noise.hpp>
 
 #include <map>
 #include <vector>
 
-#include <perlin.h>
-
 #include <Block/Block.h>
 
-#define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 128
+#include <Chunk/Chunk.h>
 
 class ChunkMap {
 public:
     ChunkMap();
 
-    void render(int x, int z);
-    unsigned int chunkVAO(int x, int z);
-    unsigned int numVertices(int x, int z);
-
-    static glm::mat4 chunkModelMat(int x, int z);
+    Chunk* getChunk(std::vector<int> pos);
 
 private:
-    std::map<std::vector<int>, unsigned int> VAOmap;
-    std::map<std::vector<int>, unsigned int> vertexNumMap;
-    std::map<std::vector<int>, unsigned int> heightMap;
-
-    BlockType getBlockType(int x, int y, int z);
+    std::map<std::vector<int>, Chunk*> chunkMap;
 };
 
 #endif

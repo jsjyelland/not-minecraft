@@ -18,11 +18,9 @@
 #include <Block/Block.h>
 #include <ChunkMap/ChunkMap.h>
 
-#include <perlin.h>
-
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 10
+#define RENDER_DISTANCE 5
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
@@ -307,14 +305,11 @@ int main() {
         int chunkX = cameraPos.x / 16;
         int chunkZ = cameraPos.z / 16;
 
-        for (int i = chunkX - RENDER_DISTANCE; i < chunkX + RENDER_DISTANCE; i++) {
-            for (int k = chunkZ - RENDER_DISTANCE; k < chunkZ + RENDER_DISTANCE; k++) {
-                glm::mat4 model = ChunkMap::chunkModelMat(i, k);
-                shader.setMat4("model", model);
-
-                glBindVertexArray(chunkMap.chunkVAO(i, k));
-                glDrawArrays(GL_TRIANGLES, 0, chunkMap.numVertices(i, k));
-                glBindVertexArray(0);
+        for (int i = -RENDER_DISTANCE; i < RENDER_DISTANCE; i++) {
+            for (int k = -RENDER_DISTANCE; k < RENDER_DISTANCE * 2; k++) {
+                if (sqrt(i * i + k * k) < RENDER_DISTANCE) {
+                    chunkMap.getChunk(std::vector<int>{i + chunkX, k + chunkZ})->draw(shader);
+                }
             }
         }
         
