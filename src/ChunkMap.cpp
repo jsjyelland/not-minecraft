@@ -21,16 +21,16 @@ void ChunkMap::render(int x, int y) {
     size_t verticesSize;
     float* vertices;
 
-    unsigned int index = 0;
+    unsigned int numVertices = 0;
 
     // Iterate through the chunk
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int k = 0; k < CHUNK_SIZE; k++) {
-            int height = (int)((perlin(i + x * CHUNK_SIZE, k + y * CHUNK_SIZE, 0.01, 4) + 0.2) * (float)CHUNK_HEIGHT);
+            // int height = (int)((perlin(i + x * CHUNK_SIZE, k + y * CHUNK_SIZE, 0.01, 4) + 0.2) * (float)CHUNK_HEIGHT);
 
-            if (height > CHUNK_HEIGHT) {
-                height = CHUNK_HEIGHT;
-            }
+            // if (height > CHUNK_HEIGHT) {
+                int height = CHUNK_HEIGHT;
+            // }
 
             for (int j = 0; j < height; j++) {
                 BlockType type;
@@ -45,11 +45,39 @@ void ChunkMap::render(int x, int y) {
 
                 // Generate vertex data
 
-                vertices = Block::constructMesh(type, i, j, k, &verticesSize);
+                unsigned int directionMask = 0;
 
-                glBufferSubData(GL_ARRAY_BUFFER, index * verticesSize, verticesSize, vertices);
+                if (i == 0) {
+                    directionMask |= DIRECTION_SOUTH;
+                }
 
-                index++;
+                if (i == CHUNK_SIZE - 1) {
+                    directionMask |= DIRECTION_NORTH;
+                }
+
+                if (j == height - 1) {
+                    directionMask |= DIRECTION_TOP;
+                }
+
+                if (j == 0) {
+                    directionMask |= DIRECTION_BOTTOM;
+                }
+
+                if (k == 0) {
+                    directionMask |= DIRECTION_WEST;
+                }
+
+                if (k == CHUNK_SIZE - 1) {
+                    directionMask |= DIRECTION_EAST;
+                }
+
+                if (directionMask) {
+                    vertices = Block::constructMesh(type, i, j, k, directionMask, &verticesSize);
+
+                    glBufferSubData(GL_ARRAY_BUFFER, numVertices * 8 * sizeof(float), verticesSize, vertices);
+
+                    numVertices += verticesSize / (8 * sizeof(float));
+                }
             }
         }
     }
@@ -71,7 +99,7 @@ void ChunkMap::render(int x, int y) {
     vect = {x, y};
 
     VAOmap.insert(std::pair<std::vector<int>, unsigned int>(vect, VAO));
-    vertexNumMap.insert(std::pair<std::vector<int>, unsigned int>(vect, index * 36));
+    vertexNumMap.insert(std::pair<std::vector<int>, unsigned int>(vect, numVertices));
 }
 
 unsigned int ChunkMap::chunkVAO(int x, int y) {

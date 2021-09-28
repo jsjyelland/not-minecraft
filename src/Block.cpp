@@ -46,7 +46,7 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
  * In order of faces:
  * top, north, east, south, west, bottom
  */
-float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, size_t *size) {
+float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, size_t *size) {
     std::vector<unsigned int> atlas = atlasMap(type);
 
     float topOffsetX = (float)atlasPosXY(atlas[0])[0];
@@ -61,66 +61,101 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
     float westOffsetY = (float)atlasPosXY(atlas[4])[1];
     float bottomOffsetX = (float)atlasPosXY(atlas[5])[0];
     float bottomOffsetY = (float)atlasPosXY(atlas[5])[1];
+    
+    std::vector<float> verticesVector;
 
-    float* vertices;
-    vertices = new float[]{
-        // Top
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 0.0f + topOffsetY,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 1.0f + topOffsetY,
+    if (directionMask & DIRECTION_TOP) {
+        float top[] = {
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
+            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 0.0f + topOffsetY,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 1.0f + topOffsetY,
+        };
+        
+        verticesVector.insert(verticesVector.end(), top, top + 48);
+    }
+    
+    if (directionMask & DIRECTION_NORTH) {
+        float north[] = {
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
+            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 0.0f + northOffsetY,
+        };
 
-        // North
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 1.0f + northOffsetY,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 0.0f + northOffsetY,
+        verticesVector.insert(verticesVector.end(), north, north + 48);
+    }
 
-        // East
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 0.0f + eastOffsetY,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 1.0f + eastOffsetY,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
+    if (directionMask & DIRECTION_EAST) {
+        float east[] = {
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
+            0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 0.0f + eastOffsetY,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 1.0f + eastOffsetY,
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
+        };
 
-        // South
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 1.0f + southOffsetY,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 0.0f + southOffsetY,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
+        verticesVector.insert(verticesVector.end(), east, east + 48);
+    }
 
-        // West
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 0.0f + westOffsetY,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 1.0f + westOffsetY,
+    if (directionMask & DIRECTION_SOUTH) {
+        float south[] = {
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 1.0f + southOffsetY,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
+        };
 
-        // Bottom
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 0.0f + bottomOffsetY,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
-    };
+        verticesVector.insert(verticesVector.end(), south, south + 48);
+    }
+
+    if (directionMask & DIRECTION_WEST) { 
+        float west[] = {
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
+            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 0.0f + westOffsetY,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 1.0f + westOffsetY,
+        };
+
+        verticesVector.insert(verticesVector.end(), west, west + 48);
+    }
+
+    if (directionMask & DIRECTION_BOTTOM) {
+        float bottom[] = {
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+        };
+
+        verticesVector.insert(verticesVector.end(), bottom, bottom + 48);
+    }
+
+    float* vertices = new float[verticesVector.size()];
+
+    std::copy(verticesVector.begin(), verticesVector.end(), vertices);
 
     // Translate to position in chunk
-    for (int i = 0; i < 36; i++) {
+    for (int i = 0; i < (int)(verticesVector.size() / 8); i++) {
         vertices[i * 8] += (float)chunkX;
         vertices[i * 8 + 1] += (float)chunkY;
         vertices[i * 8 + 2] += (float)chunkZ;
     }
 
-    *size = sizeof(float) * 288;
+    *size = sizeof(float) * verticesVector.size();
+
+    verticesVector.clear();
 
     return vertices;
 }
