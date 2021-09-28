@@ -1,18 +1,11 @@
 #include <Chunk/Chunk.h>
 
-Chunk::Chunk(glm::vec2 chunkPos) {
+Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
+    map = chunkMap;
     pos = chunkPos;
 
-    // Generate heightmap
-
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int z = 0; z < CHUNK_SIZE; z++) {
-            unsigned int height = heightGen(glm::vec2(chunkPos.x * CHUNK_SIZE + x, chunkPos.y * CHUNK_SIZE + z));
-
-            heightMap[x * CHUNK_SIZE + z] = height;
-        }
-    }
-
+    generate();
+    
     // Generate VAO
     glGenVertexArrays(1, &VAO);
 
@@ -21,6 +14,32 @@ Chunk::Chunk(glm::vec2 chunkPos) {
     model = glm::translate(model, glm::vec3(pos.x * CHUNK_SIZE, 0, pos.y * CHUNK_SIZE));
 
     render();
+}
+
+void Chunk::generate() {
+    // Generate heightmap
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            BlockType type;
+            unsigned int height = heightGen(glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z));
+
+            for (int y = 0; y < CHUNK_HEIGHT; y++) {
+                if (y > height || y < 0) {
+                    type = BlockType::air;
+                } else if (y < 32 || y < height - 3) {
+                    type = BlockType::stone;
+                } else if (y < height - 1) {
+                    type = BlockType::dirt;
+                } else if (y < height) {
+                    type = BlockType::grass;
+                } else {
+                    type = BlockType::air;
+                }
+
+                blockMap[x * CHUNK_SIZE * CHUNK_HEIGHT + y * CHUNK_SIZE + z] = type;
+            }            
+        }
+    }
 }
 
 void Chunk::render() {
@@ -121,44 +140,29 @@ glm::vec2 Chunk::getPos() {
     return pos;
 }
 
-unsigned int Chunk::getHeight(glm::vec3 blockPos) {
-    int chunkX = (int)blockPos.x % CHUNK_SIZE;
-    int chunkY = (int)blockPos.z % CHUNK_SIZE;
-
-    return heightMap[chunkX * CHUNK_SIZE + chunkY];
-}
+#define MOD(x, y) ((x % y) + y) % y
 
 BlockType Chunk::getBlockType(glm::vec3 blockPos) {
-    unsigned int height;
-
-    if (!inChunk(blockPos)) {
-        height = heightGen(glm::vec2(blockPos.x, blockPos.z));
-    } else {
-        height = getHeight(blockPos);
+    if (blockPos.y < 0) {
+        return BlockType::air;
     }
 
-    int y = (int)blockPos.y;
+    if (inChunk(blockPos)) {
+        int blockX = MOD((int)blockPos.x, CHUNK_SIZE);
+        int blockZ = MOD((int)blockPos.z, CHUNK_SIZE);
+        int blockY = (int)blockPos.y;
 
-    BlockType type;
+        int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
 
-    if (y > height || y < 0) {
-        type = BlockType::air;
-    } else if (y < 32 || y < height - 3) {
-        type = BlockType::stone;
-    } else if (y < height - 1) {
-        type = BlockType::dirt;
-    } else if (y < height) {
-        type = BlockType::grass;
+        return blockMap[index];
     } else {
-        type = BlockType::air;
+        return map->getBlock(blockPos);
     }
-
-    return type;
 }
 
 bool Chunk::inChunk(glm::vec3 blockPos) {
-    int blockX = (int)blockPos.x;
-    int blockZ = (int)blockPos.z;
+    float chunkX = floor(blockPos.x / CHUNK_SIZE);
+    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
 
-    return blockX / CHUNK_SIZE == pos.x && blockZ / CHUNK_SIZE == pos.y;
+    return chunkX == pos.x && chunkZ == pos.y;
 }

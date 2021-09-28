@@ -262,7 +262,7 @@ int main() {
         
         float fps = 1 / deltaTime;
 
-        std::cout << "FPS:" << fps << std::endl;
+        // std::cout << "FPS:" << fps << std::endl;
 
         processInput(window);
 

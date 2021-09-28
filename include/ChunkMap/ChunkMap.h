@@ -17,11 +17,15 @@
 
 #include <Chunk/Chunk.h>
 
+// Forward declaration
+class Chunk;
+
 class ChunkMap {
 public:
     ChunkMap();
 
     Chunk* getChunk(std::vector<int> pos);
+    BlockType getBlock(glm::vec3 blockPos);
 
 private:
     std::map<std::vector<int>, Chunk*> chunkMap;
