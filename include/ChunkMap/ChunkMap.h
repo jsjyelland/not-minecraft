@@ -14,6 +14,8 @@
 
 #include <perlin.h>
 
+#include <Block/Block.h>
+
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 64
 
@@ -23,9 +25,13 @@ public:
 
     void render(int x, int y);
     unsigned int chunkVAO(int x, int y);
+    unsigned int numVertices(int x, int y);
+
+    static glm::mat4 chunkModelMat(int x, int y);
 
 private:
     std::map<std::vector<int>, unsigned int> VAOmap;
+    std::map<std::vector<int>, unsigned int> vertexNumMap;
 };
 
 #endif

@@ -28,7 +28,7 @@
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 60.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -256,80 +256,7 @@ int main() {
     
     // Vertex data
 
-    size_t verticesSize;
-    float* vertices = Block::constructMesh(BlockType::grass, 0, 0, &verticesSize);
-
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 288, vertices, GL_STATIC_DRAW);
-
-    free(vertices);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindVertexArray(0);
-
-    glm::mat4* modelMatrices;
-    modelMatrices = new glm::mat4[CHUNK_BUFFER_SIZE];
-
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int k = 0; k < CHUNK_SIZE; k++) {
-            float height = (perlin(i / 64.0f, k / 64.0f) + 0.4) * (float)CHUNK_HEIGHT;
-
-            for (int j = 0; j < CHUNK_HEIGHT; j++) {
-                glm::mat4 model = glm::mat4(1.0f);
-
-                if (j <= (int)height) {
-                    model = glm::translate(model, glm::vec3((float)i, (float)j, (float)k));
-                    model = glm::scale(model, glm::vec3(0.999f));
-                } else {
-                    model = glm::mat4(0.0f);
-                }
-
-                modelMatrices[i * CHUNK_SIZE * CHUNK_HEIGHT + k * CHUNK_HEIGHT + j] = model;
-            }
-        }
-    }
-
-    unsigned int instanceVBO;
-    glGenBuffers(1, &instanceVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * CHUNK_BUFFER_SIZE, &modelMatrices[0], GL_STATIC_DRAW);
-
-    glBindVertexArray(VAO);
-
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
-
-    glEnableVertexAttribArray(5);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
-
-    glEnableVertexAttribArray(6);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
-
-    glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
-    glVertexAttribDivisor(5, 1);
-    glVertexAttribDivisor(6, 1);
-
-    glBindVertexArray(0);
+    ChunkMap chunkMap;
 
     // Render loop
 
@@ -340,7 +267,7 @@ int main() {
 
         processInput(window);
 
-        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
@@ -348,7 +275,7 @@ int main() {
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 500.0f);
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
@@ -376,17 +303,23 @@ int main() {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, atlas);
 
-        glBindVertexArray(VAO);
+        int chunkX = 0;//cameraPos.x / 16;
+        int chunkY = 0;//cameraPos.z / 16;
 
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 36, CHUNK_BUFFER_SIZE);
-        glBindVertexArray(0);
+        for (int i = chunkX - 3; i < chunkX + 3; i++) {
+            for (int j = chunkY - 3; j < chunkY + 3; j++) {
+                glm::mat4 model = ChunkMap::chunkModelMat(i, j);
+                shader.setMat4("model", model);
 
+                glBindVertexArray(chunkMap.chunkVAO(i, j));
+                glDrawArrays(GL_TRIANGLES, 0, chunkMap.numVertices(i, j));
+                glBindVertexArray(0);
+            }
+        }
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
 
     glfwTerminate();
 

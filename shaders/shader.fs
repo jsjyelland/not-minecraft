@@ -50,7 +50,7 @@ void main() {
    vec3 viewDir = normalize(viewPos - FragPos);
 
    vec3 result = calcDirLight(dirLight, norm, viewDir);
-   // vec3 result = vec3(texture(material.diffuse, TexCoords / 16.0));
+   // vec3 result = vec3(texture(material.diffuse, TexCoords));
 
    // for (int i = 0; i < NR_POINT_LIGHTS; i++) {
    //    result += calcPointLight(pointLights[i], norm, FragPos, viewDir);

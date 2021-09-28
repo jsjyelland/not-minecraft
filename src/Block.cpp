@@ -46,7 +46,7 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
  * In order of faces:
  * top, north, east, south, west, bottom
  */
-float* Block::constructMesh(BlockType type, int chunkX, int chunkY, size_t *size) {
+float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, size_t *size) {
     std::vector<unsigned int> atlas = atlasMap(type);
 
     float topOffsetX = (float)atlasPosXY(atlas[0])[0];
@@ -113,7 +113,14 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, size_t *size
         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
     };
 
-    *size = sizeof(vertices);
+    // Translate to position in chunk
+    for (int i = 0; i < 36; i++) {
+        vertices[i * 8] += (float)chunkX;
+        vertices[i * 8 + 1] += (float)chunkY;
+        vertices[i * 8 + 2] += (float)chunkZ;
+    }
+
+    *size = sizeof(float) * 288;
 
     return vertices;
 }

@@ -1,6 +1,6 @@
 CC = g++
 
-CPPFLAGS = -Iinclude -W -std=c++11
+CPPFLAGS = -Iinclude -W -std=c++17
 
 SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst src/%.cpp, build/%.o, $(SRC))

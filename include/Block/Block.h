@@ -20,7 +20,7 @@ class Block {
 public:
     static std::vector<unsigned int> atlasPosXY(unsigned int atlasPos);
     static std::vector<unsigned int> atlasMap(BlockType type);
-    static float* constructMesh(BlockType type, int chunkX, int chunkY, size_t *size);
+    static float* constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, size_t *size);
 };
 
 #endif
