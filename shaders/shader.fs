@@ -59,7 +59,7 @@ void main() {
    // vec3 emission = vec3(texture(material.emission, TexCoords));
 
    float gamma = 2.2;
-   FragColor.xyz = pow(result.xyz, vec3(1.0/gamma));
+   FragColor.xyz = pow(result.xyz, vec3(1.0/gamma)) - 0.2;
 }
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {

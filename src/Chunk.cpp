@@ -141,7 +141,7 @@ glm::vec2 Chunk::getPos() {
 #define MOD(x, y) ((x % y) + y) % y
 
 BlockType Chunk::getBlockType(glm::vec3 blockPos) {
-    if (blockPos.y < 0) {
+    if (blockPos.y < 0 || blockPos.y > 127.0) {
         return BlockType::air;
     }
 
@@ -166,7 +166,7 @@ void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
     int blockX = MOD((int)round(blockPos.x), CHUNK_SIZE);
     int blockZ = MOD((int)round(blockPos.z), CHUNK_SIZE);
     int blockY = (int)round(blockPos.y);
-    
+
     int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
 
     blockMap[index] = type;

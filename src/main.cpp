@@ -230,8 +230,9 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
             stbi_image_free(data);
         }
     }
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -273,7 +274,7 @@ int main() {
     glfwSetScrollCallback(window, scrollCallback);
 
     Shader shader("shaders/shader.vs", "shaders/shader.fs");
-    Shader lightCubeShader("shaders/shader.vs", "shaders/lightcube_shader.fs");
+    Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
@@ -284,10 +285,83 @@ int main() {
     stbi_set_flip_vertically_on_load(true);
     unsigned int atlas = loadTexture("textures/atlas.png");
 
+    std::vector<std::string> faces{
+        "textures/skybox/left.png",
+        "textures/skybox/left.png",
+        "textures/skybox/top.png",
+        "textures/skybox/bottom.png",
+        "textures/skybox/left.png",
+        "textures/skybox/left.png"
+    };
+
+    stbi_set_flip_vertically_on_load(false);
+    unsigned int cubemapTexture = loadCubemap(faces);
+
+    // Skybox
+    float skyboxVertices[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
+
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
+
     // Render loop
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
+
+        float time = glm::mod<float>(currentFrame / 50.f, (2.0f * glm::pi<float>()));
+
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         
@@ -312,12 +386,14 @@ int main() {
         glClearColor(0.3f, 0.6f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.use();
-
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 500.0f);
+
+        // Draw chunks
+
+        shader.use();
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
@@ -325,14 +401,16 @@ int main() {
         shader.setInt("material.diffuse", 0);
         shader.setInt("material.specular", 1);
         shader.setInt("material.emission", 2);
-        shader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        shader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
         shader.setFloat("material.shininess", 0.0f);
 
+        float lightMul = glm::cos(time) / 2.0f + 1.0f;
+
         // directional light
-        shader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        shader.setVec3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
-        shader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
-        shader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        shader.setVec3("dirLight.direction", glm::vec3(0, -cos(time), -sin(time)));
+        shader.setVec3("dirLight.ambient", glm::vec3(0.2f) * lightMul + 0.01f);
+        shader.setVec3("dirLight.diffuse", glm::vec3(0.4f) * lightMul);
+        shader.setVec3("dirLight.specular", glm::vec3(0.3f) * lightMul);
 
         shader.setVec3("viewPos", cameraPos);
 
@@ -355,6 +433,29 @@ int main() {
                 }
             }
         }
+
+        // Draw skybox
+
+        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+        skyboxShader.use();
+        view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix
+
+        // Rotate according to time of day
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, time, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        skyboxShader.setMat4("view", view);
+        skyboxShader.setMat4("projection", projection);
+        skyboxShader.setMat4("model", model);
+
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
         
         glfwSwapBuffers(window);
         glfwPollEvents();
