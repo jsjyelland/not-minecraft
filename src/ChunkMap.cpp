@@ -18,8 +18,8 @@ Chunk* ChunkMap::getChunk(std::vector<int> pos) {
 }
 
 BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
-    float chunkX = floor(blockPos.x / CHUNK_SIZE);
-    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
+    float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
+    float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
     std::vector<int> chunkPos{(int)chunkX, (int)chunkZ};
 
@@ -31,8 +31,8 @@ BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
 }
 
 void ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
-    float chunkX = floor(blockPos.x / CHUNK_SIZE);
-    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
+    float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
+    float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
     std::vector<int> chunkPos{(int)chunkX, (int)chunkZ};
 

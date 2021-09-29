@@ -20,7 +20,7 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 10
+#define RENDER_DISTANCE 6
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
@@ -95,8 +95,8 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
         fov = 1.0f;
     }
 
-    if (fov > 90.0f) {
-        fov = 90.0f;
+    if (fov > 120.0f) {
+        fov = 120.0f;
     }
 }
 
@@ -152,7 +152,7 @@ void processInput(GLFWwindow *window) {
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
-            vertSpeed = 50.0f;
+            vertSpeed = 15.0f;
             cameraPos += cameraUp * 0.1f;
         }
     }
@@ -191,7 +191,7 @@ unsigned int loadTexture(char const* path) {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         stbi_image_free(data);
@@ -275,6 +275,7 @@ int main() {
 
     Shader shader("shaders/shader.vs", "shaders/shader.fs");
     Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
+    Shader cursorShader("shaders/cursor.vs", "shaders/cursor.fs");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
@@ -355,6 +356,27 @@ int main() {
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+    float cursorVertices[] = {
+        -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f 
+    };
+
+    unsigned int cursorVAO, cursorVBO;
+    glGenVertexArrays(1, &cursorVAO);
+    glGenBuffers(1, &cursorVBO);
+    glBindVertexArray(cursorVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cursorVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cursorVertices), &cursorVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)3);
+
+    glLineWidth(10.0f);
+    glEnable(GL_LINE_SMOOTH);
+
     // Render loop
 
     while (!glfwWindowShouldClose(window)) {
@@ -375,7 +397,7 @@ int main() {
 
         cameraPos += cameraUp * vertSpeed * deltaTime;
 
-        if (cameraPos.y < 0.0f) {
+        if (cameraPos.y < -60.0f) {
             cameraPos.y = 128.0f;
         }
 
@@ -456,6 +478,17 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS); // set depth function back to default
+
+        // draw cursor
+
+        cursorShader.use();
+
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::scale(transform, glm::vec3(50.0f / (float)WINDOW_WIDTH, 50.0f / (float)WINDOW_HEIGHT, 0));
+        cursorShader.setMat4("transform", transform);
+
+        glBindVertexArray(cursorVAO);
+        glDrawArrays(GL_LINES, 0, 4);
         
         glfwSwapBuffers(window);
         glfwPollEvents();

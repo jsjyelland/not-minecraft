@@ -172,11 +172,34 @@ void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
     blockMap[index] = type;
 
     render();
+
+    if (blockX == 0) {
+        // re-render south chunk
+
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x - 1, (int)pos.y});
+        chunk->render();
+    } else if (blockX == 15) {
+        // north
+
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x + 1, (int)pos.y});
+        chunk->render();
+    }
+    
+    if (blockZ == 0) {
+        // west
+
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y - 1});
+        chunk->render();
+    } else if (blockZ == 15) {
+        // east
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y + 1});
+        chunk->render();
+    }
 }
 
 bool Chunk::inChunk(glm::vec3 blockPos) {
-    float chunkX = floor(blockPos.x / CHUNK_SIZE);
-    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
+    float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
+    float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
     return chunkX == pos.x && chunkZ == pos.y;
 }
