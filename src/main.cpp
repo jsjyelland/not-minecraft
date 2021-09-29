@@ -20,14 +20,16 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 5
+#define RENDER_DISTANCE 10
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 60.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 130.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float vertSpeed = 0.0f;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -43,6 +45,8 @@ float fov = 45.0f;
 bool firstMouse = true;
 
 bool wireframe = false;
+
+ChunkMap chunkMap;
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -96,12 +100,35 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
     }
 }
 
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        // Break block
+
+        glm::vec3 direction = glm::normalize(cameraFront);
+        // Raycast
+        for (int i = 0; i < 100; i++) {
+            glm::vec3 testPos = cameraPos + direction * (float)i * 0.05f;
+
+            BlockType block = chunkMap.getBlock(testPos);
+            
+            if (block != BlockType::air) {
+                chunkMap.setBlock(testPos, BlockType::air);
+                break;
+            }
+        }
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+        // Place block
+    }
+}
+
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    const float cameraSpeed = 20.0f * deltaTime;
+    const float cameraSpeed = 5.0f * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
@@ -119,13 +146,20 @@ void processInput(GLFWwindow *window) {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     }
 
+    // if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    //     cameraPos += cameraUp * cameraSpeed;
+    // }
+
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        cameraPos += cameraUp * cameraSpeed;
+        if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
+            vertSpeed = 50.0f;
+            cameraPos += cameraUp * 0.1f;
+        }
     }
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        cameraPos -= cameraUp * cameraSpeed;
-    }
+    // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+    //     cameraPos -= cameraUp * cameraSpeed;
+    // }
 
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
         wireframe = !wireframe;
@@ -234,6 +268,7 @@ int main() {
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
     glfwSetScrollCallback(window, scrollCallback);
 
@@ -249,10 +284,6 @@ int main() {
     stbi_set_flip_vertically_on_load(true);
     unsigned int atlas = loadTexture("textures/atlas.png");
 
-    // Chunk map
-
-    ChunkMap chunkMap;
-
     // Render loop
 
     while (!glfwWindowShouldClose(window)) {
@@ -261,6 +292,18 @@ int main() {
         lastFrame = currentFrame;
         
         float fps = 1 / deltaTime;
+
+        if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
+            vertSpeed = 0.0f;
+        } else {
+            vertSpeed -= 0.6f;
+        }
+
+        cameraPos += cameraUp * vertSpeed * deltaTime;
+
+        if (cameraPos.y < 0.0f) {
+            cameraPos.y = 128.0f;
+        }
 
         // std::cout << "FPS:" << fps << std::endl;
 
@@ -283,12 +326,12 @@ int main() {
         shader.setInt("material.specular", 1);
         shader.setInt("material.emission", 2);
         shader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-        shader.setFloat("material.shininess", 32.0f);
+        shader.setFloat("material.shininess", 0.0f);
 
         // directional light
         shader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        shader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        shader.setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
+        shader.setVec3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
+        shader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
         shader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
         shader.setVec3("viewPos", cameraPos);

@@ -26,6 +26,7 @@ public:
 
     Chunk* getChunk(std::vector<int> pos);
     BlockType getBlock(glm::vec3 blockPos);
+    void setBlock(glm::vec3 blockPos, BlockType type);
 
 private:
     std::map<std::vector<int>, Chunk*> chunkMap;

@@ -100,15 +100,13 @@ void Chunk::render() {
                 }
 
                 if (directionMask) {
-                    vertices = Block::constructMesh(type, i, j, k, directionMask, &verticesSize);
-
-                    verticesVector.insert(verticesVector.end(), vertices, vertices + verticesSize / sizeof(float));                  
-
-                    numVertices += verticesSize / (8 * sizeof(float));
+                    Block::constructMesh(type, i, j, k, directionMask, verticesVector);
                 }
             }
         }
     }
+
+    numVertices = verticesVector.size() / 8;
     
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * numVertices, verticesVector.data(), GL_STATIC_DRAW);
 
@@ -148,9 +146,9 @@ BlockType Chunk::getBlockType(glm::vec3 blockPos) {
     }
 
     if (inChunk(blockPos)) {
-        int blockX = MOD((int)blockPos.x, CHUNK_SIZE);
-        int blockZ = MOD((int)blockPos.z, CHUNK_SIZE);
-        int blockY = (int)blockPos.y;
+        int blockX = MOD((int)round(blockPos.x), CHUNK_SIZE);
+        int blockZ = MOD((int)round(blockPos.z), CHUNK_SIZE);
+        int blockY = (int)round(blockPos.y);
 
         int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
 
@@ -158,6 +156,22 @@ BlockType Chunk::getBlockType(glm::vec3 blockPos) {
     } else {
         return map->getBlock(blockPos);
     }
+}
+
+void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
+    if (!inChunk(blockPos)) {
+        return;
+    }
+
+    int blockX = MOD((int)round(blockPos.x), CHUNK_SIZE);
+    int blockZ = MOD((int)round(blockPos.z), CHUNK_SIZE);
+    int blockY = (int)round(blockPos.y);
+    
+    int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
+
+    blockMap[index] = type;
+
+    render();
 }
 
 bool Chunk::inChunk(glm::vec3 blockPos) {

@@ -46,7 +46,7 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
  * In order of faces:
  * top, north, east, south, west, bottom
  */
-float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, size_t *size) {
+void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, std::vector<float> &data) {
     std::vector<unsigned int> atlas = atlasMap(type);
 
     float topOffsetX = (float)atlasPosXY(atlas[0])[0];
@@ -61,8 +61,8 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
     float westOffsetY = (float)atlasPosXY(atlas[4])[1];
     float bottomOffsetX = (float)atlasPosXY(atlas[5])[0];
     float bottomOffsetY = (float)atlasPosXY(atlas[5])[1];
-    
-    std::vector<float> verticesVector;
+
+    size_t initialSize = data.size();
 
     if (directionMask & DIRECTION_TOP) {
         float top[] = {
@@ -74,7 +74,7 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 1.0f + topOffsetY,
         };
         
-        verticesVector.insert(verticesVector.end(), top, top + 48);
+        data.insert(data.end(), top, top + 48);
     }
     
     if (directionMask & DIRECTION_NORTH) {
@@ -87,7 +87,7 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 0.0f + northOffsetY,
         };
 
-        verticesVector.insert(verticesVector.end(), north, north + 48);
+        data.insert(data.end(), north, north + 48);
     }
 
     if (directionMask & DIRECTION_EAST) {
@@ -100,7 +100,7 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
         };
 
-        verticesVector.insert(verticesVector.end(), east, east + 48);
+        data.insert(data.end(), east, east + 48);
     }
 
     if (directionMask & DIRECTION_SOUTH) {
@@ -113,7 +113,7 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
         };
 
-        verticesVector.insert(verticesVector.end(), south, south + 48);
+        data.insert(data.end(), south, south + 48);
     }
 
     if (directionMask & DIRECTION_WEST) { 
@@ -126,7 +126,7 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 1.0f + westOffsetY,
         };
 
-        verticesVector.insert(verticesVector.end(), west, west + 48);
+        data.insert(data.end(), west, west + 48);
     }
 
     if (directionMask & DIRECTION_BOTTOM) {
@@ -139,23 +139,13 @@ float* Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, 
             -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
         };
 
-        verticesVector.insert(verticesVector.end(), bottom, bottom + 48);
+        data.insert(data.end(), bottom, bottom + 48);
     }
-
-    float* vertices = new float[verticesVector.size()];
-
-    std::copy(verticesVector.begin(), verticesVector.end(), vertices);
 
     // Translate to position in chunk
-    for (int i = 0; i < (int)(verticesVector.size() / 8); i++) {
-        vertices[i * 8] += (float)chunkX;
-        vertices[i * 8 + 1] += (float)chunkY;
-        vertices[i * 8 + 2] += (float)chunkZ;
+    for (unsigned int i = 0; i < (data.size() - initialSize) / 8; i++) {
+        data[initialSize + (i * 8)] += (float)chunkX;
+        data[initialSize + (i * 8 + 1)] += (float)chunkY;
+        data[initialSize + (i * 8 + 2)] += (float)chunkZ;
     }
-
-    *size = sizeof(float) * verticesVector.size();
-
-    verticesVector.clear();
-
-    return vertices;
 }

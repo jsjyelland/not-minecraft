@@ -29,3 +29,14 @@ BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
         return BlockType::air;
     }
 }
+
+void ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
+    float chunkX = floor(blockPos.x / CHUNK_SIZE);
+    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
+
+    std::vector<int> chunkPos{(int)chunkX, (int)chunkZ};
+
+    if (chunkMap.count(chunkPos)) {
+        chunkMap[chunkPos]->setBlockType(blockPos, type);
+    }
+}
