@@ -28,9 +28,9 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 6
+#define RENDER_DISTANCE 10
 
-#define WINDOW_WIDTH 1600
+#define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 1000
 
 #define GRAVITY 30.0f
@@ -58,6 +58,13 @@ bool firstMouse = true;
 bool wireframe = false;
 
 ChunkMap chunkMap;
+
+GLFWwindow *window;
+unsigned int skyboxVAO, cursorVAO;
+
+Shader shader, cursorShader, skyboxShader;
+
+unsigned int atlas, cubemapTexture;
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -122,7 +129,7 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
 
             BlockType block = chunkMap.getBlock(testPos);
             
-            if (block != BlockType::air) {
+            if (Block::isSolid(block)) {
                 chunkMap.setBlock(testPos, BlockType::air);
                 break;
             }
@@ -251,7 +258,7 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
-}  
+}
 
 int main() {
     glfwInit();
@@ -259,9 +266,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
 
-    GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Not Minecraft", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Not Minecraft", NULL, NULL);
     if (window == NULL) {
         printf("Failed to create window");
 
@@ -285,12 +291,11 @@ int main() {
 
     glfwSetScrollCallback(window, scrollCallback);
 
-    Shader shader("shaders/shader.vs", "shaders/shader.fs");
-    Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
-    Shader cursorShader("shaders/cursor.vs", "shaders/cursor.fs");
+    shader = Shader("shaders/shader.vs", "shaders/shader.fs");
+    skyboxShader = Shader("shaders/skybox.vs", "shaders/skybox.fs");
+    cursorShader = Shader("shaders/cursor.vs", "shaders/cursor.fs");
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -298,7 +303,7 @@ int main() {
     // Texture
 
     stbi_set_flip_vertically_on_load(true);
-    unsigned int atlas = loadTexture("textures/atlas.png");
+    atlas = loadTexture("textures/atlas.png");
 
     std::vector<std::string> faces{
         "textures/skybox/left.png",
@@ -310,7 +315,7 @@ int main() {
     };
 
     stbi_set_flip_vertically_on_load(false);
-    unsigned int cubemapTexture = loadCubemap(faces);
+    cubemapTexture = loadCubemap(faces);
 
     // Skybox
     float skyboxVertices[] = {
@@ -358,7 +363,7 @@ int main() {
         1.0f, -1.0f,  1.0f
     };
 
-    unsigned int skyboxVAO, skyboxVBO;
+    unsigned int skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
     glBindVertexArray(skyboxVAO);
@@ -377,7 +382,7 @@ int main() {
         0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f 
     };
 
-    unsigned int cursorVAO, cursorVBO;
+    unsigned int cursorVBO;
     glGenVertexArrays(1, &cursorVAO);
     glGenBuffers(1, &cursorVBO);
     glBindVertexArray(cursorVAO);
@@ -387,9 +392,6 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)3);
-
-    glLineWidth(10.0f);
-    glEnable(GL_LINE_SMOOTH);
 
     // Render loop
 
@@ -416,8 +418,6 @@ int main() {
                 cameraPos.y = 128.0f;
             }
         #endif
-
-        // std::cout << "FPS:" << fps << std::endl;
 
         processInput(window);
 
@@ -495,6 +495,8 @@ int main() {
 
         chunkMap.getChunk(std::vector<int>{chunkX, chunkZ}, true)->draw(shader);
 
+        chunkMap.genChunks(1);
+
         // Draw skybox
 
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -528,6 +530,8 @@ int main() {
 
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
+
+        // std::cout << "frame time: " << glfwGetTime() - currentFrame << std::endl;
         
         glfwSwapBuffers(window);
         glfwPollEvents();

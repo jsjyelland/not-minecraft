@@ -1,7 +1,7 @@
 #include <ChunkMap/ChunkMap.h>
 
 ChunkMap::ChunkMap() {
-
+    
 }
 
 Chunk* ChunkMap::getChunk(std::vector<int> pos, bool generate) {
@@ -12,28 +12,51 @@ Chunk* ChunkMap::getChunk(std::vector<int> pos, bool generate) {
     } else if (generate) {
         chunk = new Chunk(glm::vec2(pos[0], pos[1]), this);
         chunkMap.insert(std::pair<std::vector<int>, Chunk*>(pos, chunk));
-
-        // Re-render chunks that are adjacent
-        Chunk *chunk;
-
-        // south
-        chunk = getChunk(std::vector<int>{pos[0] - 1, pos[1]}, false);
-        if (chunk) chunk->render();
-        
-        // north
-        chunk = getChunk(std::vector<int>{pos[0] + 1, pos[1]}, false);
-        if (chunk) chunk->render();
-
-        // west
-        chunk = getChunk(std::vector<int>{pos[0], pos[1] - 1}, false);
-        if (chunk) chunk->render();
-        
-        // east
-        chunk = getChunk(std::vector<int>{pos[0], pos[1] + 1}, false);
-        if (chunk) chunk->render();
+        genQueue.insert(genQueue.begin(), chunk);
     }
     
     return chunk;
+}
+
+void ChunkMap::genChunks(unsigned int max) {
+    unsigned int count = 0;
+
+    while (!genQueue.empty()) {
+        if (count++ > max) {
+            return;
+        }
+
+        double lastTime = glfwGetTime();
+
+        Chunk *chunk = genQueue.front();
+        genQueue.erase(genQueue.begin());
+
+        chunk->generate();
+        chunk->render();
+
+        std::vector<int> pos{(int)chunk->getPos().x, (int)chunk->getPos().y};
+
+        // Re-render chunks that are adjacent
+        Chunk *nextChunk;
+
+        // south
+        nextChunk = getChunk(std::vector<int>{pos[0] - 1, pos[1]}, false);
+        if (nextChunk) nextChunk->render();
+        
+        // north
+        nextChunk = getChunk(std::vector<int>{pos[0] + 1, pos[1]}, false);
+        if (nextChunk) nextChunk->render();
+
+        // west
+        nextChunk = getChunk(std::vector<int>{pos[0], pos[1] - 1}, false);
+        if (nextChunk) nextChunk->render();
+        
+        // east
+        nextChunk = getChunk(std::vector<int>{pos[0], pos[1] + 1}, false);
+        if (nextChunk) nextChunk->render();
+
+        std::cout << "chunkgen: " << glfwGetTime() - lastTime << std::endl;
+    }
 }
 
 BlockType ChunkMap::getBlock(glm::vec3 blockPos) {

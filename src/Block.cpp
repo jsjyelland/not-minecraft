@@ -74,16 +74,18 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
     float bottomOffsetX = (float)atlasPosXY(atlas[5])[0];
     float bottomOffsetY = (float)atlasPosXY(atlas[5])[1];
 
-    size_t initialSize = data.size();
+    float x = (float)chunkX;
+    float y = (float)chunkY;
+    float z = (float)chunkZ;
 
     if (directionMask & DIRECTION_TOP) {
         float top[] = {
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
-            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 0.0f + topOffsetY,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
-            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 1.0f + topOffsetY,
+            -0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
+             0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
+             0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 0.0f + topOffsetY,
+             0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  1.0f,  0.0f, 1.0f + topOffsetX, 1.0f + topOffsetY,
+            -0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 0.0f + topOffsetY,
+            -0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  1.0f,  0.0f, 0.0f + topOffsetX, 1.0f + topOffsetY,
         };
         
         data.insert(data.end(), top, top + 48);
@@ -91,12 +93,12 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
     
     if (directionMask & DIRECTION_NORTH) {
         float north[] = {
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
-            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 1.0f + northOffsetY,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
-            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 0.0f + northOffsetY,
+            0.5f+x,  0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f+x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
+            0.5f+x,  0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f+x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + northOffsetX, 0.0f + northOffsetY,
+            0.5f+x,  0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 1.0f + northOffsetY,
+            0.5f+x, -0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + northOffsetX, 0.0f + northOffsetY,
         };
 
         data.insert(data.end(), north, north + 48);
@@ -104,12 +106,12 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
 
     if (directionMask & DIRECTION_EAST) {
         float east[] = {
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
-            0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 0.0f + eastOffsetY,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 1.0f + eastOffsetY,
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
+            -0.5f+x, -0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
+             0.5f+x, -0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 0.0f + eastOffsetY,
+             0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
+             0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 1.0f + eastOffsetX, 1.0f + eastOffsetY,
+            -0.5f+x,  0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 1.0f + eastOffsetY,
+            -0.5f+x, -0.5f+y,  0.5f+z,  0.0f,  0.0f, 1.0f, 0.0f + eastOffsetX, 0.0f + eastOffsetY,
         };
 
         data.insert(data.end(), east, east + 48);
@@ -117,12 +119,12 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
 
     if (directionMask & DIRECTION_SOUTH) {
         float south[] = {
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
-            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 1.0f + southOffsetY,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 0.0f + southOffsetY,
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
+            -0.5f+x,  0.5f+y,  0.5f+z, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
+            -0.5f+x,  0.5f+y, -0.5f+z, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 1.0f + southOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z, -1.0f,  0.0f,  0.0f, 1.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f+x, -0.5f+y,  0.5f+z, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 0.0f + southOffsetY,
+            -0.5f+x,  0.5f+y,  0.5f+z, -1.0f,  0.0f,  0.0f, 0.0f + southOffsetX, 1.0f + southOffsetY,
         };
 
         data.insert(data.end(), south, south + 48);
@@ -130,12 +132,12 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
 
     if (directionMask & DIRECTION_WEST) { 
         float west[] = {
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
-            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 0.0f + westOffsetY,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
-            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 1.0f + westOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
+             0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
+             0.5f+x, -0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 0.0f + westOffsetY,
+             0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 1.0f + westOffsetX, 1.0f + westOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 0.0f + westOffsetY,
+            -0.5f+x,  0.5f+y, -0.5f+z,  0.0f,  0.0f, -1.0f, 0.0f + westOffsetX, 1.0f + westOffsetY,
         };
 
         data.insert(data.end(), west, west + 48);
@@ -143,21 +145,14 @@ void Block::constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, un
 
     if (directionMask & DIRECTION_BOTTOM) {
         float bottom[] = {
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
-            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 0.0f + bottomOffsetY,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 1.0f + bottomOffsetY,
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+             0.5f+x, -0.5f+y, -0.5f+z,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 0.0f + bottomOffsetY,
+             0.5f+x, -0.5f+y,  0.5f+z,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+             0.5f+x, -0.5f+y,  0.5f+z,  0.0f, -1.0f,  0.0f, 1.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+            -0.5f+x, -0.5f+y,  0.5f+z,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 1.0f + bottomOffsetY,
+            -0.5f+x, -0.5f+y, -0.5f+z,  0.0f, -1.0f,  0.0f, 0.0f + bottomOffsetX, 0.0f + bottomOffsetY,
         };
 
         data.insert(data.end(), bottom, bottom + 48);
-    }
-
-    // Translate to position in chunk
-    for (unsigned int i = 0; i < (data.size() - initialSize) / 8; i++) {
-        data[initialSize + (i * 8)] += (float)chunkX;
-        data[initialSize + (i * 8 + 1)] += (float)chunkY;
-        data[initialSize + (i * 8 + 2)] += (float)chunkZ;
     }
 }

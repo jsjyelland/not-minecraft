@@ -35,7 +35,6 @@ public:
     static bool isTranslucent(BlockType type);
 
     static void constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, std::vector<float> &data);
-
 };
 
 #endif

@@ -4,9 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/noise.hpp>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <array>
 #include <vector>
 
@@ -17,6 +14,8 @@
 #include <WorldGen/HeightMap.h>
 
 #include <ChunkMap/ChunkMap.h>
+
+#include <GLFW/glfw3.h>
 
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 128
@@ -29,6 +28,7 @@ class Chunk {
 public:
     Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap);
 
+    void generate();
     void render();
     void draw(Shader &shader);
 
@@ -38,18 +38,23 @@ public:
     glm::vec2 getPos();
 
 private:
+    bool empty = true;
+
     ChunkMap *map;
 
-    unsigned int solidVAO, translucentVAO;
+    std::vector<float> solidVerticesVector;
+    std::vector<float> translucentVerticesVector;
 
-    std::array<BlockType, CHUNK_VOLUME> blockMap;
+    unsigned int solidVAO, translucentVAO;
+    unsigned int solidVBO, translucentVBO;
+
+    BlockType blockMap[CHUNK_VOLUME] = {BlockType::air};
 
     glm::vec2 pos;
     glm::mat4 model;
-
-    void generate();
     
     bool inChunk(glm::vec3 blockPos);
+    BlockType getBlockTypeInternal(int chunkX, int chunkY, int chunkZ);
 
     unsigned int numSolidVertices, numTranslucentVertices;
 };
