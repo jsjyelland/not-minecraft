@@ -461,16 +461,39 @@ int main() {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, atlas);
 
-        int chunkX = cameraPos.x / 16;
-        int chunkZ = cameraPos.z / 16;
+        int chunkX = (int)floor(round(cameraPos.x) / CHUNK_SIZE);
+        int chunkZ = (int)floor(round(cameraPos.z) / CHUNK_SIZE);
 
-        for (int i = -RENDER_DISTANCE; i < RENDER_DISTANCE; i++) {
-            for (int k = -RENDER_DISTANCE; k < RENDER_DISTANCE * 2; k++) {
-                if (sqrt(i * i + k * k) < RENDER_DISTANCE) {
-                    chunkMap.getChunk(std::vector<int>{i + chunkX, k + chunkZ}, true)->draw(shader);
-                }
+        // Draw chunks, in order from furthest from the camera inward.
+
+        for (int i = RENDER_DISTANCE; i > 0; i--) {
+            for (int x = -i; x < 0; x++) {
+                chunkMap.getChunk(std::vector<int>{x + chunkX, i + chunkZ}, true)->draw(shader);
+                chunkMap.getChunk(std::vector<int>{-x + chunkX, -i + chunkZ}, true)->draw(shader);
             }
+
+            for (int x = i; x > 0; x--) {
+                chunkMap.getChunk(std::vector<int>{x + chunkX, i + chunkZ}, true)->draw(shader);
+                chunkMap.getChunk(std::vector<int>{-x + chunkX, -i + chunkZ}, true)->draw(shader);
+            }
+            
+            for (int z = -i + 1; z < 0; z++) {
+                chunkMap.getChunk(std::vector<int>{i + chunkX, z + chunkZ}, true)->draw(shader);
+                chunkMap.getChunk(std::vector<int>{-i + chunkX, -z + chunkZ}, true)->draw(shader);
+            }
+
+            for (int z = i - 1; z > 0; z--) {
+                chunkMap.getChunk(std::vector<int>{i + chunkX, z + chunkZ}, true)->draw(shader);
+                chunkMap.getChunk(std::vector<int>{-i + chunkX, -z + chunkZ}, true)->draw(shader);
+            }
+
+            chunkMap.getChunk(std::vector<int>{-i + chunkX, chunkZ}, true)->draw(shader);
+            chunkMap.getChunk(std::vector<int>{i + chunkX, chunkZ}, true)->draw(shader);
+            chunkMap.getChunk(std::vector<int>{chunkX, i + chunkZ}, true)->draw(shader);
+            chunkMap.getChunk(std::vector<int>{chunkX, -i + chunkZ}, true)->draw(shader);
         }
+
+        chunkMap.getChunk(std::vector<int>{chunkX, chunkZ}, true)->draw(shader);
 
         // Draw skybox
 
