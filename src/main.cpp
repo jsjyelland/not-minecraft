@@ -25,6 +25,9 @@
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
 
+#define GRAVITY 30.0f
+#define JUMP_SPEED 7.0f
+
 glm::vec3 cameraPos = glm::vec3(0.0f, 130.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -40,7 +43,7 @@ float yaw = -90.f;
 float lastX = WINDOW_WIDTH / 2;
 float lastY = WINDOW_HEIGHT / 2;
 
-float fov = 45.0f;
+float fov = 80.0f;
 
 bool firstMouse = true;
 
@@ -152,7 +155,7 @@ void processInput(GLFWwindow *window) {
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
-            vertSpeed = 15.0f;
+            vertSpeed = JUMP_SPEED;
             cameraPos += cameraUp * 0.1f;
         }
     }
@@ -257,7 +260,6 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         printf("Failed to initialise GLAD");
@@ -392,7 +394,7 @@ int main() {
         if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
             vertSpeed = 0.0f;
         } else {
-            vertSpeed -= 0.6f;
+            vertSpeed -= GRAVITY * deltaTime;
         }
 
         cameraPos += cameraUp * vertSpeed * deltaTime;
@@ -451,7 +453,7 @@ int main() {
         for (int i = -RENDER_DISTANCE; i < RENDER_DISTANCE; i++) {
             for (int k = -RENDER_DISTANCE; k < RENDER_DISTANCE * 2; k++) {
                 if (sqrt(i * i + k * k) < RENDER_DISTANCE) {
-                    chunkMap.getChunk(std::vector<int>{i + chunkX, k + chunkZ})->draw(shader);
+                    chunkMap.getChunk(std::vector<int>{i + chunkX, k + chunkZ}, true)->draw(shader);
                 }
             }
         }

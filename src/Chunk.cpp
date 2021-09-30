@@ -21,7 +21,7 @@ void Chunk::generate() {
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             BlockType type;
-            unsigned int height = heightGen(glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z));
+            int height = heightGen(glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z));
 
             for (int y = 0; y < CHUNK_HEIGHT; y++) {
                 if (y > height || y < 0) {
@@ -176,23 +176,23 @@ void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
     if (blockX == 0) {
         // re-render south chunk
 
-        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x - 1, (int)pos.y});
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x - 1, (int)pos.y}, true);
         chunk->render();
     } else if (blockX == 15) {
         // north
 
-        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x + 1, (int)pos.y});
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x + 1, (int)pos.y}, true);
         chunk->render();
     }
     
     if (blockZ == 0) {
         // west
 
-        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y - 1});
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y - 1}, true);
         chunk->render();
     } else if (blockZ == 15) {
         // east
-        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y + 1});
+        Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y + 1}, true);
         chunk->render();
     }
 }
