@@ -22,14 +22,20 @@ enum BlockType {
     air,
     grass,
     dirt,
-    stone
+    stone,
+    water
 };
 
 class Block {
 public:
     static std::vector<unsigned int> atlasPosXY(unsigned int atlasPos);
     static std::vector<unsigned int> atlasMap(BlockType type);
+
+    static bool isSolid(BlockType type);
+    static bool isTranslucent(BlockType type);
+
     static void constructMesh(BlockType type, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, std::vector<float> &data);
+
 };
 
 #endif

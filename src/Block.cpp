@@ -19,6 +19,10 @@ std::vector<unsigned int> Block::atlasMap(BlockType type) {
         case BlockType::stone:
             vec = {3, 3, 3, 3, 3, 3};
             break;
+
+        case BlockType::water:
+            vec = {4, 4, 4, 4, 4, 4};
+            break;
     }
 
     return vec;
@@ -36,6 +40,14 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
     ret = {x, y};
 
     return ret;
+}
+
+bool Block::isSolid(BlockType type) {
+    return type != BlockType::air && type != BlockType::water;
+}
+
+bool Block::isTranslucent(BlockType type) {
+    return type == BlockType::water;
 }
 
 /**

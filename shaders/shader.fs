@@ -49,7 +49,9 @@ void main() {
    vec3 norm = normalize(Normal);
    vec3 viewDir = normalize(viewPos - FragPos);
 
-   vec3 result = calcDirLight(dirLight, norm, viewDir);
+   vec4 result = vec4(calcDirLight(dirLight, norm, viewDir), texture(material.diffuse, TexCoords).w);
+   FragColor = result;
+
    // vec3 result = vec3(texture(material.diffuse, TexCoords));
 
    // for (int i = 0; i < NR_POINT_LIGHTS; i++) {
@@ -58,8 +60,8 @@ void main() {
 
    // vec3 emission = vec3(texture(material.emission, TexCoords));
 
-   float gamma = 2.2;
-   FragColor.xyz = pow(result.xyz, vec3(1.0/gamma)) - 0.2;
+   // float gamma = 2.2;
+   // FragColor = vec4(pow(result.xyz, vec3(1.0/gamma)) - 0.2, result.w);
 }
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {

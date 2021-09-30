@@ -7,7 +7,8 @@ Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
     generate();
     
     // Generate VAO
-    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &solidVAO);
+    glGenVertexArrays(1, &translucentVAO);
 
     // Model transform
     model = glm::mat4(1.0f);
@@ -24,9 +25,11 @@ void Chunk::generate() {
             int height = heightGen(glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z));
 
             for (int y = 0; y < CHUNK_HEIGHT; y++) {
-                if (y > height || y < 0) {
+                if (y < 0) {
                     type = BlockType::air;
-                } else if (y < 32 || y < height - 3) {
+                } else if (y >= height && y < 40) {
+                    type = BlockType::water;
+                } else if (y < 32 || y < height - 2) {
                     type = BlockType::stone;
                 } else if (y < height - 1) {
                     type = BlockType::dirt;
@@ -37,29 +40,23 @@ void Chunk::generate() {
                 }
 
                 blockMap[x * CHUNK_SIZE * CHUNK_HEIGHT + y * CHUNK_SIZE + z] = type;
-            }            
+            }
         }
     }
 }
 
 void Chunk::render() {
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    size_t verticesSize;
-    float* vertices;
-
-    numVertices = 0;
+    // Reset vertex count
+    numSolidVertices = 0;
+    numTranslucentVertices = 0;
 
     int chunkOffsetX = pos.x * CHUNK_SIZE;
     int chunkOffsetZ = pos.y * CHUNK_SIZE;
 
-    std::vector<float> verticesVector;
+    std::vector<float> solidVerticesVector;
+    std::vector<float> translucentVerticesVector;
 
-    // Generate meshes
+    // Loop through each block in the chunk to generate the mesh
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int k = 0; k < CHUNK_SIZE; k++) {
             for (int j = 0; j < CHUNK_HEIGHT; j++) {
@@ -74,43 +71,103 @@ void Chunk::render() {
                 // Generate vertex data
 
                 unsigned int directionMask = 0;
+                
+                if (Block::isSolid(type)) {
+                    // Solid mesh
 
-                if (getBlockType(blockPos + glm::vec3(-1, 0, 0)) == BlockType::air) {
-                    directionMask |= DIRECTION_SOUTH;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(-1, 0, 0)))) {
+                        directionMask |= DIRECTION_SOUTH;
+                    }
 
-                if (getBlockType(blockPos + glm::vec3(1, 0, 0)) == BlockType::air) {
-                    directionMask |= DIRECTION_NORTH;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(1, 0, 0)))) {
+                        directionMask |= DIRECTION_NORTH;
+                    }
 
-                if (getBlockType(blockPos + glm::vec3(0, 1, 0)) == BlockType::air) {
-                    directionMask |= DIRECTION_TOP;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(0, 1, 0)))) {
+                        directionMask |= DIRECTION_TOP;
+                    }
 
-                if (getBlockType(blockPos + glm::vec3(0, -1, 0)) == BlockType::air) {
-                    directionMask |= DIRECTION_BOTTOM;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(0, -1, 0)))) {
+                        directionMask |= DIRECTION_BOTTOM;
+                    }
 
-                if (getBlockType(blockPos + glm::vec3(0, 0, -1)) == BlockType::air) {
-                    directionMask |= DIRECTION_WEST;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(0, 0, -1)))) {
+                        directionMask |= DIRECTION_WEST;
+                    }
 
-                if (getBlockType(blockPos + glm::vec3(0, 0, 1)) == BlockType::air) {
-                    directionMask |= DIRECTION_EAST;
-                }
+                    if (!Block::isSolid(getBlockType(blockPos + glm::vec3(0, 0, 1)))) {
+                        directionMask |= DIRECTION_EAST;
+                    }
 
-                if (directionMask) {
-                    Block::constructMesh(type, i, j, k, directionMask, verticesVector);
+                    if (directionMask) {
+                        Block::constructMesh(type, i, j, k, directionMask, solidVerticesVector);
+                    }
+                } else if (Block::isTranslucent(type)) {
+                    // Translucent mesh
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(-1, 0, 0)))) {
+                        directionMask |= DIRECTION_SOUTH;
+                    }
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(1, 0, 0)))) {
+                        directionMask |= DIRECTION_NORTH;
+                    }
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(0, 1, 0)))) {
+                        directionMask |= DIRECTION_TOP;
+                    }
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(0, -1, 0)))) {
+                        directionMask |= DIRECTION_BOTTOM;
+                    }
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(0, 0, -1)))) {
+                        directionMask |= DIRECTION_WEST;
+                    }
+
+                    if (!Block::isTranslucent(getBlockType(blockPos + glm::vec3(0, 0, 1)))) {
+                        directionMask |= DIRECTION_EAST;
+                    }
+
+                    if (directionMask) {
+                        Block::constructMesh(type, i, j, k, directionMask, translucentVerticesVector);
+                    }
                 }
             }
         }
     }
 
-    numVertices = verticesVector.size() / 8;
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * numVertices, verticesVector.data(), GL_STATIC_DRAW);
+    numSolidVertices = solidVerticesVector.size() / 8;
+    numTranslucentVertices = translucentVerticesVector.size() / 8;
 
-    verticesVector.clear();
+    unsigned int solidVBO, translucentVBO;
+    glGenBuffers(1, &solidVBO);
+    glGenBuffers(1, &translucentVBO);
+
+    // Solid
+    glBindVertexArray(solidVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, solidVBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * numSolidVertices, solidVerticesVector.data(), GL_STATIC_DRAW);
+
+    solidVerticesVector.clear();
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    // Translucent
+    glBindVertexArray(translucentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, translucentVBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * numTranslucentVertices, translucentVerticesVector.data(), GL_STATIC_DRAW);
+
+    translucentVerticesVector.clear();
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -129,8 +186,12 @@ void Chunk::render() {
 void Chunk::draw(Shader &shader) {
     shader.setMat4("model", model);
 
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, numVertices);
+    glBindVertexArray(solidVAO);
+    glDrawArrays(GL_TRIANGLES, 0, numSolidVertices);
+
+    glBindVertexArray(translucentVAO);
+    glDrawArrays(GL_TRIANGLES, 0, numTranslucentVertices);
+
     glBindVertexArray(0);
 }
 

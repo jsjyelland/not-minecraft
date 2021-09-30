@@ -40,7 +40,7 @@ public:
 private:
     ChunkMap *map;
 
-    unsigned int VAO;
+    unsigned int solidVAO, translucentVAO;
 
     std::array<BlockType, CHUNK_VOLUME> blockMap;
 
@@ -51,7 +51,7 @@ private:
     
     bool inChunk(glm::vec3 blockPos);
 
-    unsigned int numVertices;
+    unsigned int numSolidVertices, numTranslucentVertices;
 };
 
 #endif

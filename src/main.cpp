@@ -18,6 +18,14 @@
 #include <Block/Block.h>
 #include <ChunkMap/ChunkMap.h>
 
+#define FLYING 1
+
+#if FLYING
+    #define CAMERA_SPEED 20.0f
+#else
+    #define CAMERA_SPEED 5.0f
+#endif
+
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
 #define RENDER_DISTANCE 6
@@ -131,7 +139,7 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    const float cameraSpeed = 5.0f * deltaTime;
+    const float cameraSpeed = CAMERA_SPEED * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
@@ -149,20 +157,22 @@ void processInput(GLFWwindow *window) {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     }
 
-    // if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-    //     cameraPos += cameraUp * cameraSpeed;
-    // }
-
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
-            vertSpeed = JUMP_SPEED;
-            cameraPos += cameraUp * 0.1f;
+    #if !FLYING
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
+                vertSpeed = JUMP_SPEED;
+                cameraPos += cameraUp * 0.1f;
+            }
         }
-    }
+    #else
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            cameraPos += cameraUp * cameraSpeed;
+        }
 
-    // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-    //     cameraPos -= cameraUp * cameraSpeed;
-    // }
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+            cameraPos -= cameraUp * cameraSpeed;
+        }
+    #endif
 
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
         wireframe = !wireframe;
@@ -282,6 +292,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Texture
 
@@ -391,17 +403,19 @@ int main() {
         
         float fps = 1 / deltaTime;
 
-        if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
-            vertSpeed = 0.0f;
-        } else {
-            vertSpeed -= GRAVITY * deltaTime;
-        }
+        #if !FLYING
+            if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
+                vertSpeed = 0.0f;
+            } else {
+                vertSpeed -= GRAVITY * deltaTime;
+            }
 
-        cameraPos += cameraUp * vertSpeed * deltaTime;
+            cameraPos += cameraUp * vertSpeed * deltaTime;
 
-        if (cameraPos.y < -60.0f) {
-            cameraPos.y = 128.0f;
-        }
+            if (cameraPos.y < -60.0f) {
+                cameraPos.y = 128.0f;
+            }
+        #endif
 
         // std::cout << "FPS:" << fps << std::endl;
 
