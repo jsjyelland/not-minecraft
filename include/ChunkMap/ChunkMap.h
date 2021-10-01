@@ -10,6 +10,7 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include <Block/Block.h>
 
@@ -23,14 +24,16 @@ public:
     ChunkMap();
 
     Chunk* getChunk(std::vector<int> pos, bool generate);
+
+    void addToRenderQueue(std::vector<int> pos);
     
     BlockType getBlock(glm::vec3 blockPos);
     void setBlock(glm::vec3 blockPos, BlockType type);
-    void genChunks(unsigned int max);
+    void renderChunks(unsigned int max);
 
 private:
     std::map<std::vector<int>, Chunk*> chunkMap;
-    std::vector<Chunk*> genQueue;
+    std::vector<std::vector<int>> renderQueue;
 };
 
 #endif

@@ -28,6 +28,11 @@ class Chunk {
 public:
     Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap);
 
+    void setNorth(Chunk *chunk);
+    void setEast(Chunk *chunk);
+    void setSouth(Chunk *chunk);
+    void setWest(Chunk *chunk);
+
     void generate();
     void render();
     void draw(Shader &shader);
@@ -39,6 +44,11 @@ public:
 
 private:
     bool empty = true;
+
+    Chunk *north;
+    Chunk *east;
+    Chunk *south;
+    Chunk *west;
 
     ChunkMap *map;
 

@@ -495,7 +495,7 @@ int main() {
 
         chunkMap.getChunk(std::vector<int>{chunkX, chunkZ}, true)->draw(shader);
 
-        chunkMap.genChunks(1);
+        chunkMap.renderChunks(2);
 
         // Draw skybox
 
@@ -531,7 +531,7 @@ int main() {
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
 
-        // std::cout << "frame time: " << glfwGetTime() - currentFrame << std::endl;
+        std::cout << "fps: " << fps << std::endl;
         
         glfwSwapBuffers(window);
         glfwPollEvents();

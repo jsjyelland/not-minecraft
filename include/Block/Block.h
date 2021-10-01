@@ -23,7 +23,8 @@ enum BlockType {
     grass,
     dirt,
     stone,
-    water
+    water,
+    wood
 };
 
 class Block {

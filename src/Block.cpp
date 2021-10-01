@@ -23,6 +23,10 @@ std::vector<unsigned int> Block::atlasMap(BlockType type) {
         case BlockType::water:
             vec = {4, 4, 4, 4, 4, 4};
             break;
+
+        case BlockType::wood:
+            vec = {6, 5, 5, 5, 5, 6};
+            break;
     }
 
     return vec;

@@ -1,6 +1,11 @@
 #include <Chunk/Chunk.h>
 
 Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
+    north = NULL;
+    east = NULL;
+    south = NULL;
+    west = NULL;
+
     numSolidVertices = 0;
     numTranslucentVertices = 0;
 
@@ -21,8 +26,6 @@ Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
 }
 
 void Chunk::generate() {
-    double lastTime = glfwGetTime();
-
     BlockType type;
     int height;
 
@@ -39,6 +42,8 @@ void Chunk::generate() {
                     type = BlockType::dirt;
                 } else if (y < height) {
                     type = BlockType::grass;
+                } else if (y == height && (x + z) % 100 == 1) {
+                    type = BlockType::wood;
                 } else {
                     type = BlockType::air;
                 }
@@ -51,8 +56,6 @@ void Chunk::generate() {
     }
 
     empty = false;
-
-    std::cout << "generate: " << glfwGetTime() - lastTime << std::endl;
 }
 
 void Chunk::render() {
@@ -154,7 +157,7 @@ void Chunk::render() {
         }
     }
 
-    std::cout << "mesh: " << glfwGetTime() - lastTime << std::endl;
+    // std::cout << "mesh: " << glfwGetTime() - lastTime << std::endl;
     numSolidVertices = solidVerticesVector.size() / 8;
     numTranslucentVertices = translucentVerticesVector.size() / 8;
 
@@ -233,10 +236,6 @@ glm::vec2 Chunk::getPos() {
 #define MOD(x, y) ((x % y) + y) % y
 
 BlockType Chunk::getBlockType(glm::vec3 blockPos) {
-    if (blockPos.y < 0 || blockPos.y >= CHUNK_HEIGHT) {
-        return BlockType::air;
-    }
-
     if (inChunk(blockPos)) {
         int blockX = MOD((int)round(blockPos.x), CHUNK_SIZE);
         int blockZ = MOD((int)round(blockPos.z), CHUNK_SIZE);
@@ -245,21 +244,40 @@ BlockType Chunk::getBlockType(glm::vec3 blockPos) {
         int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
 
         return blockMap[index];
-    } else {
-        return map->getBlock(blockPos);
     }
+    
+    return BlockType::air;
 }
 
 BlockType Chunk::getBlockTypeInternal(int chunkX, int chunkY, int chunkZ) {
     if (chunkY < 0 || chunkY >= CHUNK_HEIGHT) {
         return BlockType::air;
-    } 
+    }
 
-    if (chunkX < 0 || chunkZ < 0 || chunkX > 15 || chunkZ > 15) {
-        int chunkOffsetX = pos.x * CHUNK_SIZE;
-        int chunkOffsetZ = pos.y * CHUNK_SIZE;
-
-        return map->getBlock(glm::vec3(chunkX + chunkOffsetX, chunkY, chunkZ + chunkOffsetZ));
+    if (chunkX < 0) {
+        if (south) {
+            return south->getBlockTypeInternal(MOD(chunkX, CHUNK_SIZE), chunkY, MOD(chunkZ, CHUNK_SIZE));
+        } else {
+            return BlockType::air;
+        }
+    } else if (chunkZ < 0) {
+        if (west) {
+            return west->getBlockTypeInternal(MOD(chunkX, CHUNK_SIZE), chunkY, MOD(chunkZ, CHUNK_SIZE));
+        } else {
+            return BlockType::air;
+        }
+    } else if(chunkX > 15) {
+        if (north) {
+            return north->getBlockTypeInternal(MOD(chunkX, CHUNK_SIZE), chunkY, MOD(chunkZ, CHUNK_SIZE));
+        } else {
+            return BlockType::air;
+        }
+    } else if (chunkZ > 15) {
+        if (east) {
+            return east->getBlockTypeInternal(MOD(chunkX, CHUNK_SIZE), chunkY, MOD(chunkZ, CHUNK_SIZE));
+        } else {
+            return BlockType::air;
+        }
     }
 
     return blockMap[chunkX * CHUNK_HEIGHT * CHUNK_SIZE + chunkY * CHUNK_SIZE + chunkZ];
@@ -308,5 +326,41 @@ bool Chunk::inChunk(glm::vec3 blockPos) {
     float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
     float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
-    return chunkX == pos.x && chunkZ == pos.y;
+    return chunkX == pos.x && chunkZ == pos.y && blockPos.y >= 0 && blockPos.y < CHUNK_HEIGHT;
+}
+
+void Chunk::setNorth(Chunk *chunk) {
+    if (chunk == NULL) {
+        return;
+    }
+
+    north = chunk;
+    chunk->south = this;
+}
+
+void Chunk::setEast(Chunk *chunk) {
+    if (chunk == NULL) {
+        return;
+    }
+
+    east = chunk;
+    chunk->west = this;
+}
+
+void Chunk::setSouth(Chunk *chunk) {
+    if (chunk == NULL) {
+        return;
+    }
+
+    south = chunk;
+    chunk->north = this;
+}
+
+void Chunk::setWest(Chunk *chunk) {
+    if (chunk == NULL) {
+        return;
+    }
+
+    west = chunk;
+    chunk->east = this;
 }
