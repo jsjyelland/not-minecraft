@@ -9,5 +9,6 @@
 unsigned int heightGen(glm::vec2 pos);
 bool treeGen(glm::vec2 pos);
 bool flowerGen(glm::vec2 pos);
+bool grassGen(glm::vec2 pos);
 
 #endif

@@ -38,6 +38,11 @@ std::vector<unsigned int> Block::atlasMap(BlockType type) {
 
         case BlockType::flower:
             vec = {9};
+            break;
+
+        case BlockType::short_grass:
+            vec = {10};
+            break;
     }
 
     return vec;
@@ -66,11 +71,11 @@ bool Block::isSolid(BlockType type) {
 }
 
 bool Block::isTranslucent(BlockType type) {
-    return type == BlockType::water || type == BlockType::leaves || type == BlockType::flower;
+    return type == BlockType::water || type == BlockType::leaves || isSprite(type);
 }
 
 bool Block::isSprite(BlockType type) {
-    return type == BlockType::flower;
+    return type == BlockType::flower || type == BlockType::short_grass;
 }
 
 /**
@@ -191,23 +196,23 @@ void Block::constructSpriteMesh(BlockType type, int chunkX, int chunkY, int chun
     float z = (float)chunkZ;
 
     float north[] = {
-        x, 0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 1.0f + offsetY,
-        x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 0.0f + offsetY,
-        x, 0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 1.0f + offsetY,
-        x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 0.0f + offsetY,
-        x, 0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 1.0f + offsetY,
-        x, -0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 0.0f + offsetY,
+         0.5f+x,  0.9142135624f+y,  0.5f+z,  1.0f,  0.0f,  -1.0f, 0.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  -1.0f, 1.0f + offsetX, 0.0f + offsetY,
+        -0.5f+x,  0.9142135624f+y, -0.5f+z,  1.0f,  0.0f,  -1.0f, 1.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  -1.0f, 1.0f + offsetX, 0.0f + offsetY,
+         0.5f+x,  0.9142135624f+y,  0.5f+z,  1.0f,  0.0f,  -1.0f, 0.0f + offsetX, 1.0f + offsetY,
+         0.5f+x, -0.5f+y,  0.5f+z,  1.0f,  0.0f,  -1.0f, 0.0f + offsetX, 0.0f + offsetY,
     };
 
     data.insert(data.end(), north, north + 48);
 
     float east[] = {
-        -0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 0.0f + offsetY,
-        0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 0.0f + offsetY,
-        0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 1.0f + offsetY,
-        0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 1.0f + offsetY,
-        -0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 1.0f + offsetY,
-        -0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 0.0f + offsetY,
+        -0.5f+x, -0.5f+y,  0.5f+z, -1.0f, 0.0f, -1.0f, 0.0f + offsetX, 0.0f + offsetY,
+         0.5f+x, -0.5f+y, -0.5f+z, -1.0f, 0.0f, -1.0f, 1.0f + offsetX, 0.0f + offsetY,
+         0.5f+x,  0.9142135624f+y, -0.5f+z, -1.0f, 0.0f, -1.0f, 1.0f + offsetX, 1.0f + offsetY,
+         0.5f+x,  0.9142135624f+y, -0.5f+z, -1.0f, 0.0f, -1.0f, 1.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x,  0.9142135624f+y,  0.5f+z, -1.0f, 0.0f, -1.0f, 0.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x, -0.5f+y,  0.5f+z, -1.0f, 0.0f, -1.0f, 0.0f + offsetX, 0.0f + offsetY,
     };
 
     data.insert(data.end(), east, east + 48);

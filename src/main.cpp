@@ -60,11 +60,30 @@ bool wireframe = false;
 ChunkMap chunkMap;
 
 GLFWwindow *window;
-unsigned int skyboxVAO, cursorVAO;
+unsigned int skyboxVAO, cursorVAO, selectionVAO;
 
 Shader shader, cursorShader, skyboxShader;
 
+bool blockSelected = false;
+glm::vec3 selectedBlockPos;
+
 unsigned int atlas, cubemapTexture;
+
+void updateBlockSelection() {
+    blockSelected = false;
+    // Raycast
+    for (int i = 0; i < 100; i++) {
+        glm::vec3 testPos = cameraPos + cameraFront * (float)i * 0.05f;
+
+        BlockType block = chunkMap.getBlock(testPos);
+        
+        if (Block::isBlock(block)) {
+            blockSelected = true;
+            selectedBlockPos = glm::vec3(round(testPos.x), round(testPos.y), round(testPos.z));
+            break;
+        }
+    }
+}
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -105,6 +124,8 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
     cameraFront = glm::normalize(direction);
+
+    updateBlockSelection();
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -121,23 +142,15 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         // Break block
-
-        glm::vec3 direction = glm::normalize(cameraFront);
-        // Raycast
-        for (int i = 0; i < 100; i++) {
-            glm::vec3 testPos = cameraPos + direction * (float)i * 0.05f;
-
-            BlockType block = chunkMap.getBlock(testPos);
-            
-            if (Block::isSolid(block)) {
-                chunkMap.setBlock(testPos, BlockType::air);
-                break;
-            }
+        if (blockSelected) {
+            chunkMap.setBlock(selectedBlockPos, BlockType::air);
+            updateBlockSelection();
         }
     }
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
+
     }
 }
 
@@ -376,6 +389,7 @@ int main() {
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+    // Cursor
     float cursorVertices[] = {
         -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
         1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
@@ -392,7 +406,60 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)3);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    // Box selection
+    float selectionVertices[] = {
+        // positions          
+        -0.5f, 0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, 0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f, 0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, 0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f, 0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+
+
+        -0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+        -0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+
+        -0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+    };
+
+    unsigned int selectionVBO;
+    glGenVertexArrays(1, &selectionVAO);
+    glGenBuffers(1, &selectionVBO);
+    glBindVertexArray(selectionVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, selectionVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(selectionVertices), &selectionVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 
     // Render loop
 
@@ -521,8 +588,7 @@ int main() {
 
         chunkMap.renderChunks(2);
 
-        // draw cursor
-
+        // Draw cursor
         cursorShader.use();
 
         glm::mat4 transform = glm::mat4(1.0f);
@@ -531,6 +597,15 @@ int main() {
 
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
+
+        // Draw selection box around block
+        if (blockSelected) {
+            glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.01f));
+            cursorShader.setMat4("transform", selectionTransform);
+
+            glBindVertexArray(selectionVAO);
+            glDrawArrays(GL_LINES, 0, 24);
+        }
         
         glfwSwapBuffers(window);
         glfwPollEvents();

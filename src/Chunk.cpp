@@ -28,14 +28,15 @@ Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
 void Chunk::generate() {
     BlockType type;
     int height;
-    bool tree, flower;
+    bool tree, flower, grass;
 
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             glm::vec2 genPos = glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z);
             height = heightGen(genPos);
-            tree = treeGen(genPos) && height >= 42;
-            flower = flowerGen(genPos) && height >= 42;
+            tree = treeGen(genPos) && height > 42;
+            flower = flowerGen(genPos) && height > 42 && !tree;
+            grass = grassGen(genPos) && height > 42 && !tree && !flower;
 
             for (int y = 0; y < CHUNK_HEIGHT; y++) {
                 if (y >= height && y < 40) {
@@ -50,6 +51,8 @@ void Chunk::generate() {
                     type = BlockType::grass;
                 } else if (y == height && flower) {
                     type = BlockType::flower;
+                } else if (y == height && grass) {
+                    type = BlockType::short_grass;
                 } else if (tree && y <= height + 3) {
                     type = BlockType::wood;
                 } else if (tree && y > height + 3 && y < height + 5) {

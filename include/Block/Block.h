@@ -27,7 +27,8 @@ enum BlockType {
     wood,
     leaves,
     sand,
-    flower
+    flower,
+    short_grass
 };
 
 class Block {
