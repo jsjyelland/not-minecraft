@@ -70,6 +70,10 @@ void ChunkMap::renderChunks(unsigned int max) {
 }
 
 BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
+    if (round(blockPos.y) < 0 || round(blockPos.y) >= CHUNK_HEIGHT) {
+        return BlockType::air;
+    }
+
     float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
     float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
