@@ -60,6 +60,9 @@ void Chunk::render() {
         return;
     }
 
+    solidVerticesVector.reserve(8000);
+    translucentVerticesVector.reserve(8000);
+
     double lastTime = glfwGetTime();
     // Reset vertex count
     numSolidVertices = 0;
@@ -114,10 +117,12 @@ void Chunk::render() {
             }
 
             if (directionMask) {
-                Block::constructMesh(type, i, j, k, directionMask, solidVerticesVector);
+                Block::constructMesh(type, 1.0f, i, j, k, directionMask, solidVerticesVector);
             }
         } else if (Block::isTranslucent(type)) {
             // Translucent mesh
+
+            BlockType topBlock = getBlockTypeInternal(i, j + 1, k);
 
             if (!Block::isTranslucent(getBlockTypeInternal(i - 1, j, k))) {
                 directionMask |= DIRECTION_SOUTH;
@@ -127,7 +132,7 @@ void Chunk::render() {
                 directionMask |= DIRECTION_NORTH;
             }
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i, j + 1, k))) {
+            if (!Block::isTranslucent(topBlock)) {
                 directionMask |= DIRECTION_TOP;
             }
 
@@ -144,7 +149,7 @@ void Chunk::render() {
             }
 
             if (directionMask) {
-                Block::constructMesh(type, i, j, k, directionMask, translucentVerticesVector);
+                Block::constructMesh(type, topBlock == BlockType::air ? 0.8f : 1.0f, i, j, k, directionMask, translucentVerticesVector);
             }
         }
     }
