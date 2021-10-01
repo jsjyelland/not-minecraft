@@ -28,9 +28,9 @@
 
 #define CHUNK_BUFFER_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT
 
-#define RENDER_DISTANCE 10
+#define RENDER_DISTANCE 12
 
-#define WINDOW_WIDTH 1200
+#define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 1000
 
 #define GRAVITY 30.0f
@@ -276,6 +276,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         printf("Failed to initialise GLAD");
@@ -429,6 +430,29 @@ int main() {
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 500.0f);
 
+        // Draw skybox
+
+        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+        skyboxShader.use();
+        glm::mat4 skyboxView = glm::mat4(glm::mat3(view)); // remove translation from the view matrix
+
+        // Rotate according to time of day
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, time, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        skyboxShader.setMat4("view", skyboxView);
+        skyboxShader.setMat4("projection", projection);
+        skyboxShader.setMat4("model", model);
+
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
+
         // Draw chunks
 
         shader.use();
@@ -497,29 +521,6 @@ int main() {
 
         chunkMap.renderChunks(2);
 
-        // Draw skybox
-
-        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-        skyboxShader.use();
-        view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix
-
-        // Rotate according to time of day
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, time, glm::vec3(1.0f, 0.0f, 0.0f));
-
-        skyboxShader.setMat4("view", view);
-        skyboxShader.setMat4("projection", projection);
-        skyboxShader.setMat4("model", model);
-
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
-
         // draw cursor
 
         cursorShader.use();
@@ -530,8 +531,6 @@ int main() {
 
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
-
-        std::cout << "fps: " << fps << std::endl;
         
         glfwSwapBuffers(window);
         glfwPollEvents();

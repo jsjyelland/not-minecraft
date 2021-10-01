@@ -28,22 +28,32 @@ Chunk::Chunk(glm::vec2 chunkPos, ChunkMap *chunkMap) {
 void Chunk::generate() {
     BlockType type;
     int height;
+    bool tree, flower;
 
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
-            height = heightGen(glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z));
+            glm::vec2 genPos = glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z);
+            height = heightGen(genPos);
+            tree = treeGen(genPos) && height >= 42;
+            flower = flowerGen(genPos) && height >= 42;
 
             for (int y = 0; y < CHUNK_HEIGHT; y++) {
                 if (y >= height && y < 40) {
                     type = BlockType::water;
-                } else if (y < 32 || y < height - 2) {
+                } else if (y < 42 && y > 30 && y < height && y > height - 4) {
+                    type = BlockType::sand;
+                } else if (y <= 30 || y < height - 2) {
                     type = BlockType::stone;
                 } else if (y < height - 1) {
                     type = BlockType::dirt;
                 } else if (y < height) {
                     type = BlockType::grass;
-                } else if (y == height && (x + z) % 100 == 1) {
+                } else if (y == height && flower) {
+                    type = BlockType::flower;
+                } else if (tree && y <= height + 3) {
                     type = BlockType::wood;
+                } else if (tree && y > height + 3 && y < height + 5) {
+                    type = BlockType::leaves;
                 } else {
                     type = BlockType::air;
                 }
@@ -91,8 +101,10 @@ void Chunk::render() {
 
         // Generate vertex data
         directionMask = 0;
-        
-        if (Block::isSolid(type)) {
+
+        if (Block::isSprite(type)) {
+            Block::constructSpriteMesh(type, i, j, k, translucentVerticesVector);
+        } else if (Block::isSolid(type)) {
             // Solid mesh
 
             if (!Block::isSolid(getBlockTypeInternal(i - 1, j, k))) {
@@ -127,32 +139,32 @@ void Chunk::render() {
 
             BlockType topBlock = getBlockTypeInternal(i, j + 1, k);
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i - 1, j, k))) {
+            if (!Block::isBlock(getBlockTypeInternal(i - 1, j, k))) {
                 directionMask |= DIRECTION_SOUTH;
             }
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i + 1, j, k))) {
+            if (!Block::isBlock(getBlockTypeInternal(i + 1, j, k))) {
                 directionMask |= DIRECTION_NORTH;
             }
 
-            if (!Block::isTranslucent(topBlock)) {
+            if (!Block::isBlock(topBlock)) {
                 directionMask |= DIRECTION_TOP;
             }
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i, j - 1, k))) {
+            if (!Block::isBlock(getBlockTypeInternal(i, j - 1, k))) {
                 directionMask |= DIRECTION_BOTTOM;
             }
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i, j, k - 1))) {
+            if (!Block::isBlock(getBlockTypeInternal(i, j, k - 1))) {
                 directionMask |= DIRECTION_WEST;
             }
 
-            if (!Block::isTranslucent(getBlockTypeInternal(i, j, k + 1))) {
+            if (!Block::isBlock(getBlockTypeInternal(i, j, k + 1))) {
                 directionMask |= DIRECTION_EAST;
             }
 
             if (directionMask) {
-                Block::constructMesh(type, topBlock == BlockType::air ? 0.8f : 1.0f, i, j, k, directionMask, translucentVerticesVector);
+                Block::constructMesh(type, topBlock == BlockType::air && type == BlockType::water ? 0.8f : 1.0f, i, j, k, directionMask, translucentVerticesVector);
             }
         }
     }
@@ -211,7 +223,7 @@ void Chunk::draw(Shader &shader) {
     glDrawArrays(GL_TRIANGLES, 0, numSolidVertices);
 
     // Disable back-face culling
-    // glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
     // Scale down ever so slightly
     // glm::mat4 transModel = glm::mat4(1.0f);
@@ -224,7 +236,7 @@ void Chunk::draw(Shader &shader) {
     glDrawArrays(GL_TRIANGLES, 0, numTranslucentVertices);
 
     // Re-enable
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     glBindVertexArray(0);
 }

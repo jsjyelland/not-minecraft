@@ -24,7 +24,10 @@ enum BlockType {
     dirt,
     stone,
     water,
-    wood
+    wood,
+    leaves,
+    sand,
+    flower
 };
 
 class Block {
@@ -32,9 +35,12 @@ public:
     static std::vector<unsigned int> atlasPosXY(unsigned int atlasPos);
     static std::vector<unsigned int> atlasMap(BlockType type);
 
+    static bool isBlock(BlockType type);
     static bool isSolid(BlockType type);
     static bool isTranslucent(BlockType type);
+    static bool isSprite(BlockType type);
 
+    static void constructSpriteMesh(BlockType type, int chunkX, int chunkY, int chunkZ, std::vector<float> &data);
     static void constructMesh(BlockType type, float blockheight, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, std::vector<float> &data);
 };
 

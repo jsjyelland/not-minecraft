@@ -27,6 +27,17 @@ std::vector<unsigned int> Block::atlasMap(BlockType type) {
         case BlockType::wood:
             vec = {6, 5, 5, 5, 5, 6};
             break;
+
+        case BlockType::sand:
+            vec = {7, 7, 7, 7, 7, 7};
+            break;
+
+        case BlockType::leaves:
+            vec = {8, 8, 8, 8, 8, 8};
+            break;
+
+        case BlockType::flower:
+            vec = {9};
     }
 
     return vec;
@@ -46,12 +57,20 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
     return ret;
 }
 
+bool Block::isBlock(BlockType type) {
+    return type != BlockType::air;
+}
+
 bool Block::isSolid(BlockType type) {
-    return type != BlockType::air && type != BlockType::water;
+    return type != BlockType::air && !isTranslucent(type);
 }
 
 bool Block::isTranslucent(BlockType type) {
-    return type == BlockType::water;
+    return type == BlockType::water || type == BlockType::leaves || type == BlockType::flower;
+}
+
+bool Block::isSprite(BlockType type) {
+    return type == BlockType::flower;
 }
 
 /**
@@ -159,4 +178,37 @@ void Block::constructMesh(BlockType type, float blockheight, int chunkX, int chu
 
         data.insert(data.end(), bottom, bottom + 48);
     }
+}
+
+void Block::constructSpriteMesh(BlockType type, int chunkX, int chunkY, int chunkZ, std::vector<float> &data) {
+    std::vector<unsigned int> atlas = atlasMap(type);
+
+    float offsetX = (float)atlasPosXY(atlas[0])[0];
+    float offsetY = (float)atlasPosXY(atlas[0])[1];
+
+    float x = (float)chunkX;
+    float y = (float)chunkY;
+    float z = (float)chunkZ;
+
+    float north[] = {
+        x, 0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 1.0f + offsetY,
+        x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 0.0f + offsetY,
+        x, 0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 1.0f + offsetY,
+        x, -0.5f+y, -0.5f+z,  1.0f,  0.0f,  0.0f, 1.0f + offsetX, 0.0f + offsetY,
+        x, 0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 1.0f + offsetY,
+        x, -0.5f+y,  0.5f+z,  1.0f,  0.0f,  0.0f, 0.0f + offsetX, 0.0f + offsetY,
+    };
+
+    data.insert(data.end(), north, north + 48);
+
+    float east[] = {
+        -0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 0.0f + offsetY,
+        0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 0.0f + offsetY,
+        0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 1.0f + offsetY,
+        0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 1.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x, 0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 1.0f + offsetY,
+        -0.5f+x, -0.5f+y,  z,  0.0f,  0.0f, 1.0f, 0.0f + offsetX, 0.0f + offsetY,
+    };
+
+    data.insert(data.end(), east, east + 48);
 }
