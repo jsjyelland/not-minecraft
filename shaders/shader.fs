@@ -49,12 +49,14 @@ void main() {
    vec3 norm = normalize(Normal);
    vec3 viewDir = normalize(viewPos - FragPos);
 
-   vec4 result = vec4(calcDirLight(dirLight, norm, viewDir), texture(material.diffuse, TexCoords).w);
+   vec4 result = vec4(calcDirLight(dirLight, norm, viewDir), texture(material.diffuse, TexCoords).a);
+   
+
+   // vec4 result = texture(material.diffuse, TexCoords);
+
    if (result.a < 0.1) {
       discard;
    }
-
-   // vec3 result = vec3(texture(material.diffuse, TexCoords));
 
    // for (int i = 0; i < NR_POINT_LIGHTS; i++) {
    //    result += calcPointLight(pointLights[i], norm, FragPos, viewDir);

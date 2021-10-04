@@ -62,6 +62,10 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
     return ret;
 }
 
+glm::vec3 Block::blockFacePos(glm::vec3 testPos) {
+    glm::vec3 selectedBlockPos = glm::vec3(round(testPos.x), round(testPos.y), round(testPos.z));
+}
+
 bool Block::isBlock(BlockType type) {
     return type != BlockType::air;
 }

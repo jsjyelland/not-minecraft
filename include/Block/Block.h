@@ -1,6 +1,8 @@
 #ifndef BLOCKMAP_H
 #define BLOCKMAP_H
 
+#include <glm/glm.hpp>
+
 #include <vector>
 
 #include <math.h>
@@ -35,6 +37,8 @@ class Block {
 public:
     static std::vector<unsigned int> atlasPosXY(unsigned int atlasPos);
     static std::vector<unsigned int> atlasMap(BlockType type);
+
+    static glm::vec3 blockFacePos(glm::vec3 testPos);
 
     static bool isBlock(BlockType type);
     static bool isSolid(BlockType type);

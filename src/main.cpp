@@ -472,7 +472,7 @@ int main() {
         lastFrame = currentFrame;
         
         float fps = 1 / deltaTime;
-
+        
         #if !FLYING
             if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
                 vertSpeed = 0.0f;
@@ -530,16 +530,16 @@ int main() {
         shader.setInt("material.diffuse", 0);
         shader.setInt("material.specular", 1);
         shader.setInt("material.emission", 2);
-        shader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
-        shader.setFloat("material.shininess", 0.0f);
+        shader.setVec3("material.specular", glm::vec3(0.0f));
+        shader.setFloat("material.shininess", 32.0f);
 
         float lightMul = glm::cos(time) / 2.0f + 1.0f;
 
         // directional light
         shader.setVec3("dirLight.direction", glm::vec3(0, -cos(time), -sin(time)));
-        shader.setVec3("dirLight.ambient", glm::vec3(0.2f) * lightMul + 0.01f);
-        shader.setVec3("dirLight.diffuse", glm::vec3(0.4f) * lightMul);
-        shader.setVec3("dirLight.specular", glm::vec3(0.3f) * lightMul);
+        shader.setVec3("dirLight.ambient", glm::vec3(0.3f) * lightMul + 0.01f);
+        shader.setVec3("dirLight.diffuse", glm::vec3(0.5f) * lightMul);
+        shader.setVec3("dirLight.specular", glm::vec3(0.0f) * lightMul);
 
         shader.setVec3("viewPos", cameraPos);
 
@@ -586,7 +586,7 @@ int main() {
 
         chunkMap.getChunk(std::vector<int>{chunkX, chunkZ}, true)->draw(shader);
 
-        chunkMap.renderChunks(2);
+        chunkMap.renderChunks(3);
 
         // Draw cursor
         cursorShader.use();
