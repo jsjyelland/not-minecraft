@@ -57,6 +57,9 @@ bool firstMouse = true;
 
 bool wireframe = false;
 
+float windowWidth = WINDOW_WIDTH;
+float windowHeight = WINDOW_HEIGHT;
+
 ChunkMap chunkMap;
 
 GLFWwindow *window;
@@ -68,6 +71,8 @@ bool blockSelected = false;
 glm::vec3 selectedBlockPos;
 
 unsigned int atlas, cubemapTexture;
+
+bool cursorShown = false;
 
 void updateBlockSelection() {
     blockSelected = false;
@@ -86,10 +91,16 @@ void updateBlockSelection() {
 }
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
+    windowWidth = width;
+    windowHeight = height;
     glViewport(0, 0, width, height);
 }
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
+    if (cursorShown) {
+        return;
+    }
+
     if (firstMouse) {
         lastX = xpos;
         lastY = ypos;
@@ -141,6 +152,11 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 
 void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (cursorShown) {
+            cursorShown = false;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+
         // Break block
         if (blockSelected) {
             chunkMap.setBlock(selectedBlockPos, BlockType::air);
@@ -156,7 +172,10 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
 
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
+        if (!cursorShown) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            cursorShown = true;
+        }
     }
 
     const float cameraSpeed = CAMERA_SPEED * deltaTime;
@@ -495,7 +514,7 @@ int main() {
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 500.0f);
+        projection = glm::perspective(glm::radians(fov), (float)windowWidth / (float)windowHeight, 0.1f, 500.0f);
 
         // Draw skybox
 
@@ -588,16 +607,6 @@ int main() {
 
         chunkMap.renderChunks(3);
 
-        // Draw cursor
-        cursorShader.use();
-
-        glm::mat4 transform = glm::mat4(1.0f);
-        transform = glm::scale(transform, glm::vec3(50.0f / (float)WINDOW_WIDTH, 50.0f / (float)WINDOW_HEIGHT, 0));
-        cursorShader.setMat4("transform", transform);
-
-        glBindVertexArray(cursorVAO);
-        glDrawArrays(GL_LINES, 0, 4);
-
         // Draw selection box around block
         if (blockSelected) {
             glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.01f));
@@ -606,6 +615,18 @@ int main() {
             glBindVertexArray(selectionVAO);
             glDrawArrays(GL_LINES, 0, 24);
         }
+
+        // Draw cursor
+        glDepthFunc(GL_ALWAYS); // Make sure the cursor is always drawn
+        cursorShader.use();
+
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::scale(transform, glm::vec3(50.0f / (float)windowWidth, 50.0f / (float)windowHeight, 0));
+        cursorShader.setMat4("transform", transform);
+
+        glBindVertexArray(cursorVAO);
+        glDrawArrays(GL_LINES, 0, 4);
+        glDepthFunc(GL_LESS); // set depth function back to default
         
         glfwSwapBuffers(window);
         glfwPollEvents();
