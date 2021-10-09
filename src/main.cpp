@@ -21,7 +21,7 @@
 #define FLYING 1
 
 #if FLYING
-    #define CAMERA_SPEED 20.0f
+    #define CAMERA_SPEED 10.0f
 #else
     #define CAMERA_SPEED 5.0f
 #endif
@@ -76,9 +76,11 @@ bool cursorShown = false;
 
 void updateBlockSelection() {
     blockSelected = false;
+    glm::vec3 testPos;
+
     // Raycast
-    for (int i = 0; i < 100; i++) {
-        glm::vec3 testPos = cameraPos + cameraFront * (float)i * 0.05f;
+    for (float i = 0; i < 6.0f; i += (6.0f / 1000.0f)) {
+        testPos = cameraPos + cameraFront * i;
 
         BlockType block = chunkMap.getBlock(testPos);
         
@@ -166,7 +168,10 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
-
+        if (blockSelected) {
+            chunkMap.setBlock(Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos), BlockType::wood);
+            updateBlockSelection();
+        }
     }
 }
 
@@ -607,15 +612,6 @@ int main() {
 
         chunkMap.renderChunks(3);
 
-        // Draw selection box around block
-        if (blockSelected) {
-            glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.01f));
-            cursorShader.setMat4("transform", selectionTransform);
-
-            glBindVertexArray(selectionVAO);
-            glDrawArrays(GL_LINES, 0, 24);
-        }
-
         // Draw cursor
         glDepthFunc(GL_ALWAYS); // Make sure the cursor is always drawn
         cursorShader.use();
@@ -627,6 +623,15 @@ int main() {
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
         glDepthFunc(GL_LESS); // set depth function back to default
+
+        // Draw selection box around block
+        if (blockSelected) {
+            glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.001f));
+            cursorShader.setMat4("transform", selectionTransform);
+
+            glBindVertexArray(selectionVAO);
+            glDrawArrays(GL_LINES, 0, 24);
+        }
         
         glfwSwapBuffers(window);
         glfwPollEvents();

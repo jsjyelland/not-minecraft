@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <iostream>
 
 #include <math.h>
 #include <stdio.h>
@@ -38,7 +39,7 @@ public:
     static std::vector<unsigned int> atlasPosXY(unsigned int atlasPos);
     static std::vector<unsigned int> atlasMap(BlockType type);
 
-    static glm::vec3 blockFacePos(glm::vec3 testPos);
+    static glm::vec3 blockFacePos(glm::vec3 cameraPos, glm::vec3 cameraFront, glm::vec3 selectedBlockPos);
 
     static bool isBlock(BlockType type);
     static bool isSolid(BlockType type);

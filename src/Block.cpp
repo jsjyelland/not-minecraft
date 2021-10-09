@@ -62,8 +62,61 @@ std::vector<unsigned int> Block::atlasPosXY(unsigned int atlasPos) {
     return ret;
 }
 
-glm::vec3 Block::blockFacePos(glm::vec3 testPos) {
-    glm::vec3 selectedBlockPos = glm::vec3(round(testPos.x), round(testPos.y), round(testPos.z));
+glm::vec3 Block::blockFacePos(glm::vec3 cameraPos, glm::vec3 cameraFront, glm::vec3 selectedBlockPos) {
+    glm::vec3 diff = cameraPos - selectedBlockPos;
+    glm::vec3 sign = glm::sign(diff);
+    glm::vec3 signDir = glm::sign(cameraFront);
+    glm::vec3 boundsMultiplier = sign;
+
+    if (glm::abs(diff).x <= 0.5f) {
+        boundsMultiplier.x = -signDir.x;
+    }
+
+    if (glm::abs(diff).y <= 0.5f) {
+        boundsMultiplier.y = -signDir.y;
+    }
+
+    if (glm::abs(diff).z <= 0.5f) {
+        boundsMultiplier.z = -signDir.z;
+    }
+
+    glm::vec3 bounds = selectedBlockPos + (0.5f * boundsMultiplier); // get the block
+
+    glm::vec3 invD = 1.0f / cameraFront;
+
+    glm::vec3 t0 = (bounds - cameraPos) * invD;
+
+    if (t0.x > t0.y && t0.x > t0.z) {
+        // x direction is largest
+
+        if (sign.x > 0) {
+            // north side
+            return selectedBlockPos + glm::vec3(1, 0, 0);
+        } else {
+            // south side
+            return selectedBlockPos + glm::vec3(-1, 0, 0);
+        }
+    } else if (t0.y > t0.x && t0.y > t0.z) {
+        // y direction is largest
+
+        if (sign.y > 0) {
+            // top side
+            return selectedBlockPos + glm::vec3(0, 1, 0);
+        } else {
+            // bottom side
+            return selectedBlockPos + glm::vec3(0, -1, 0);
+        }
+    } else {
+        // z direction is largest
+    
+        if (sign.z > 0) {
+            // east side
+            return selectedBlockPos + glm::vec3(0, 0, 1);
+        } else {
+            // west side
+            return selectedBlockPos + glm::vec3(0, 0, -1);
+        }
+    }
 }
 
 bool Block::isBlock(BlockType type) {
