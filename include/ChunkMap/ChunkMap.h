@@ -26,12 +26,14 @@ public:
     Chunk* getChunk(std::vector<int> pos, bool generate);
 
     void addToRenderQueue(std::vector<int> pos);
+    void addToBlockGen(glm::vec3 blockPos, BlockType type);
     
     BlockType getBlock(glm::vec3 blockPos);
-    void setBlock(glm::vec3 blockPos, BlockType type);
+    bool setBlock(glm::vec3 blockPos, BlockType type);
     void renderChunks(unsigned int max);
 
 private:
+    std::map<std::vector<int>, BlockType> blocksToGen;
     std::map<std::vector<int>, Chunk*> chunkMap;
     std::vector<std::vector<int>> renderQueue;
 };

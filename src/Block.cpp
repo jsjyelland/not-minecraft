@@ -43,6 +43,18 @@ std::vector<unsigned int> Block::atlasMap(BlockType type) {
         case BlockType::short_grass:
             vec = {10};
             break;
+
+        case BlockType::wood_planks:
+            vec = {11, 11, 11, 11, 11, 11};
+            break;
+
+        case BlockType::cobblestone:
+            vec = {12, 12, 12, 12, 12, 12};
+            break;
+
+        case BlockType::glass:
+            vec = {13, 13, 13, 13, 13, 13};
+            break;
     }
 
     return vec;
@@ -128,7 +140,7 @@ bool Block::isSolid(BlockType type) {
 }
 
 bool Block::isTranslucent(BlockType type) {
-    return type == BlockType::water || type == BlockType::leaves || isSprite(type);
+    return type == BlockType::water || type == BlockType::leaves || isSprite(type) || type == BlockType::glass;
 }
 
 bool Block::isSprite(BlockType type) {

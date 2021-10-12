@@ -30,6 +30,8 @@ void Chunk::generate() {
     int height;
     bool tree, flower, grass;
 
+    std::vector<glm::vec3> treePositions;
+
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             glm::vec2 genPos = glm::vec2(pos.x * CHUNK_SIZE + x, pos.y * CHUNK_SIZE + z);
@@ -56,13 +58,36 @@ void Chunk::generate() {
                 } else if (tree && y <= height + 3) {
                     type = BlockType::wood;
                 } else if (tree && y > height + 3 && y < height + 5) {
-                    type = BlockType::leaves;
+                    type = BlockType::air;
+                    treePositions.emplace_back(genPos.x, y, genPos.y);
                 } else {
                     type = BlockType::air;
                 }
 
                 if (type != BlockType::air) {
                     blockMap[x * CHUNK_SIZE * CHUNK_HEIGHT + y * CHUNK_SIZE + z] = type;
+                }
+            }
+        }
+    }
+
+    for (std::vector<glm::vec3>::iterator i = treePositions.begin(); i != treePositions.end(); i++) {
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                if (abs(z) == 2 && abs(x) == 2) continue;
+
+                for (int y = 0; y <= 1; y++) {
+                    setBlockType(*i + glm::vec3(x, y, z), BlockType::leaves, false, true);
+                }
+            }
+        }
+
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int y = 2; y <= 3; y++) {
+                    if (abs(z) == 1 && abs(x) == 1 && y == 3) continue;
+
+                    setBlockType(*i + glm::vec3(x, y, z), BlockType::leaves, false, true);
                 }
             }
         }
@@ -142,28 +167,32 @@ void Chunk::render() {
 
             BlockType topBlock = getBlockTypeInternal(i, j + 1, k);
 
-            if (!Block::isBlock(getBlockTypeInternal(i - 1, j, k))) {
-                directionMask |= DIRECTION_SOUTH;
-            }
+            if (type == BlockType::leaves) {
+                directionMask = DIRECTION_ALL;
+            } else {
+                if (!Block::isBlock(getBlockTypeInternal(i - 1, j, k))) {
+                    directionMask |= DIRECTION_SOUTH;
+                }
 
-            if (!Block::isBlock(getBlockTypeInternal(i + 1, j, k))) {
-                directionMask |= DIRECTION_NORTH;
-            }
+                if (!Block::isBlock(getBlockTypeInternal(i + 1, j, k))) {
+                    directionMask |= DIRECTION_NORTH;
+                }
 
-            if (!Block::isBlock(topBlock)) {
-                directionMask |= DIRECTION_TOP;
-            }
+                if (!Block::isBlock(topBlock)) {
+                    directionMask |= DIRECTION_TOP;
+                }
 
-            if (!Block::isBlock(getBlockTypeInternal(i, j - 1, k))) {
-                directionMask |= DIRECTION_BOTTOM;
-            }
+                if (!Block::isBlock(getBlockTypeInternal(i, j - 1, k))) {
+                    directionMask |= DIRECTION_BOTTOM;
+                }
 
-            if (!Block::isBlock(getBlockTypeInternal(i, j, k - 1))) {
-                directionMask |= DIRECTION_WEST;
-            }
+                if (!Block::isBlock(getBlockTypeInternal(i, j, k - 1))) {
+                    directionMask |= DIRECTION_WEST;
+                }
 
-            if (!Block::isBlock(getBlockTypeInternal(i, j, k + 1))) {
-                directionMask |= DIRECTION_EAST;
+                if (!Block::isBlock(getBlockTypeInternal(i, j, k + 1))) {
+                    directionMask |= DIRECTION_EAST;
+                }
             }
 
             if (directionMask) {
@@ -298,9 +327,13 @@ BlockType Chunk::getBlockTypeInternal(int chunkX, int chunkY, int chunkZ) {
     return blockMap[chunkX * CHUNK_HEIGHT * CHUNK_SIZE + chunkY * CHUNK_SIZE + chunkZ];
 }
 
-void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
+bool Chunk::setBlockType(glm::vec3 blockPos, BlockType type, bool doRender, bool addToGen) {
     if (!inChunk(blockPos)) {
-        return;
+        if (addToGen) {
+            map->addToBlockGen(blockPos, type);
+        }
+        
+        return false;
     }
 
     int blockX = MOD((int)round(blockPos.x), CHUNK_SIZE);
@@ -310,6 +343,10 @@ void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
     int index = blockX * CHUNK_HEIGHT * CHUNK_SIZE + blockY * CHUNK_SIZE + blockZ;
 
     blockMap[index] = type;
+
+    if (!doRender) {
+        return true;
+    }
 
     render();
 
@@ -335,6 +372,8 @@ void Chunk::setBlockType(glm::vec3 blockPos, BlockType type) {
         Chunk *chunk = map->getChunk(std::vector<int>{(int)pos.x, (int)pos.y + 1}, true);
         chunk->render();
     }
+
+    return true;
 }
 
 bool Chunk::inChunk(glm::vec3 blockPos) {

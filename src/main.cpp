@@ -36,7 +36,7 @@
 #define GRAVITY 30.0f
 #define JUMP_SPEED 7.0f
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 130.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 70.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -70,6 +70,8 @@ Shader shader, cursorShader, skyboxShader;
 bool blockSelected = false;
 glm::vec3 selectedBlockPos;
 
+BlockType blockToPlace = BlockType::cobblestone;
+
 unsigned int atlas, cubemapTexture;
 
 bool cursorShown = false;
@@ -84,7 +86,7 @@ void updateBlockSelection() {
 
         BlockType block = chunkMap.getBlock(testPos);
         
-        if (Block::isBlock(block)) {
+        if (Block::isBlock(block) && block != BlockType::water) {
             blockSelected = true;
             selectedBlockPos = glm::vec3(round(testPos.x), round(testPos.y), round(testPos.z));
             break;
@@ -169,7 +171,7 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
         if (blockSelected) {
-            chunkMap.setBlock(Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos), BlockType::wood);
+            chunkMap.setBlock(Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos), blockToPlace);
             updateBlockSelection();
         }
     }
@@ -222,6 +224,22 @@ void processInput(GLFWwindow *window) {
         wireframe = !wireframe;
 
         glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        blockToPlace = BlockType::cobblestone;
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        blockToPlace = BlockType::wood;
+    }
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+        blockToPlace = BlockType::wood_planks;
+    }
+    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
+        blockToPlace = BlockType::glass;
+    }
+    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) {
+        blockToPlace = BlockType::stone;
     }
 }
 
@@ -498,7 +516,7 @@ int main() {
         float fps = 1 / deltaTime;
         
         #if !FLYING
-            if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)) != BlockType::air) {
+            if (Block::isSolid(chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)))) {
                 vertSpeed = 0.0f;
             } else {
                 vertSpeed -= GRAVITY * deltaTime;

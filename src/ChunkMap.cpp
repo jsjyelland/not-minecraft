@@ -13,6 +13,7 @@ Chunk* ChunkMap::getChunk(std::vector<int> pos, bool generate) {
         chunk = new Chunk(glm::vec2(pos[0], pos[1]), this);
 
         chunk->generate();
+
         chunkMap.insert(std::pair<std::vector<int>, Chunk*>(pos, chunk));
 
         addToRenderQueue(pos);
@@ -63,7 +64,17 @@ void ChunkMap::renderChunks(unsigned int max) {
         renderQueue.erase(renderQueue.begin());
 
         Chunk *chunk = getChunk(pos, false);
+
         if (chunk) {
+            for (auto it = blocksToGen.cbegin(); it != blocksToGen.cend(); ) {
+                std::vector<int> vec = it->first;
+                if (chunk->setBlockType(glm::vec3(vec[0], vec[1], vec[2]), it->second, false, false)) {
+                    blocksToGen.erase(it++);
+                } else {
+                    ++it;
+                }
+            }
+
             chunk->render();
         }
     }
@@ -88,7 +99,7 @@ BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
     }
 }
 
-void ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
+bool ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
     float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
     float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
 
@@ -97,6 +108,13 @@ void ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
     std::map<std::vector<int>, Chunk*>::iterator it = chunkMap.find(chunkPos);
 
     if (it != chunkMap.end()) {
-        it->second->setBlockType(blockPos, type);
+        it->second->setBlockType(blockPos, type, true, false);
+        return true;
     }
+
+    return false;
+}
+
+void ChunkMap::addToBlockGen(glm::vec3 blockPos, BlockType type) {
+    blocksToGen.insert(std::pair<std::vector<int>, BlockType>(std::vector<int>{(int)blockPos.x, (int)blockPos.y, (int)blockPos.z}, type));
 }

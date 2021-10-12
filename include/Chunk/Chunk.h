@@ -38,7 +38,7 @@ public:
     void draw(Shader &shader);
 
     BlockType getBlockType(glm::vec3 blockPos);
-    void setBlockType(glm::vec3 blockPos, BlockType type);
+    bool setBlockType(glm::vec3 blockPos, BlockType type, bool doRender, bool addToGen);
 
     glm::vec2 getPos();
 
