@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/projection.hpp>
 
 #include <Shader/Shader.h>
 
@@ -18,10 +19,13 @@
 #include <Block/Block.h>
 #include <ChunkMap/ChunkMap.h>
 
-#define FLYING 1
+#include <Player/Player.h>
+#include <Entity/Entity.h>
+
+#define FLYING 0
 
 #if FLYING
-    #define CAMERA_SPEED 10.0f
+    #define CAMERA_SPEED 50.0f
 #else
     #define CAMERA_SPEED 5.0f
 #endif
@@ -40,7 +44,9 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 70.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-float vertSpeed = 0.0f;
+glm::vec3 movementDir;
+
+Player *player = new Player(cameraPos);
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -188,27 +194,40 @@ void processInput(GLFWwindow *window) {
     const float cameraSpeed = CAMERA_SPEED * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
+        #if FLYING
+            cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
+        #else
+            movementDir = glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)) + movementDir);
+        #endif
     }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
+        #if FLYING
+            cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)));
+        #else
+            movementDir = glm::normalize(-glm::cross(cameraUp, glm::cross(cameraFront, cameraUp)) + movementDir);
+        #endif
     }
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        #if FLYING
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        #else
+            movementDir = glm::normalize(-glm::cross(cameraFront, cameraUp) + movementDir);
+        #endif
     }
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        #if FLYING
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        #else
+            movementDir = glm::normalize(glm::cross(cameraFront, cameraUp) + movementDir);
+        #endif
     }
 
     #if !FLYING
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            if (chunkMap.getBlock(cameraPos + glm::vec3(0, -2.1f, 0)) != BlockType::air) {
-                vertSpeed = JUMP_SPEED;
-                cameraPos += cameraUp * 0.1f;
-            }
+            movementDir = glm::normalize(cameraUp + movementDir);
         }
     #else
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
@@ -514,11 +533,27 @@ int main() {
         lastFrame = currentFrame;
         
         float fps = 1 / deltaTime;
+
+        // Input & movement
+
+        movementDir = glm::vec3(0.0f);
+
+        processInput(window);
         
         #if !FLYING
-            if (Block::isSolid(chunkMap.getBlock(cameraPos + glm::vec3(0, -2, 0)))) {
-                vertSpeed = 0.0f;
-            } else {
+            glm::vec3 playerSpeed = glm::vec(0.0f);
+
+            if (Block::isSolid(chunkMap.getBlock(player->getPosition() + glm::vec3(0, -1, 0)))) {
+                playerSpeed += glm::vce3(0.0f;
+            }
+            
+            glm::vec3(0.0f, movementDir.y, 0.0f) * JUMP_SPEED
+
+            for (Entity* e : *chunkMap.collidableNeighborBlocks(player->nextPosition(deltaTime, movementDir))) {
+                if 
+            }
+
+             else {
                 vertSpeed -= GRAVITY * deltaTime;
             }
 
@@ -529,8 +564,7 @@ int main() {
             }
         #endif
 
-        processInput(window);
-
+        
         glClearColor(0.3f, 0.6f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

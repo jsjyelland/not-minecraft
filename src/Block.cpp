@@ -286,3 +286,14 @@ void Block::constructSpriteMesh(BlockType type, int chunkX, int chunkY, int chun
 
     data.insert(data.end(), east, east + 48);
 }
+
+Entity* Block::createEntity(glm::vec3 pos) {
+    Entity *blockEntity = new Entity(pos, glm::vec3(1.0f));
+
+    return blockEntity;
+}
+
+bool Block::collidable(BlockType type) {
+    // Maybe solid and collidable are the same thing? Idk probably should refactor this class
+    return isSolid(type);
+}

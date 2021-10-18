@@ -1,9 +1,5 @@
 #include <ChunkMap/ChunkMap.h>
 
-ChunkMap::ChunkMap() {
-    
-}
-
 Chunk* ChunkMap::getChunk(std::vector<int> pos, bool generate) {
     Chunk* chunk = NULL;
 
@@ -118,3 +114,28 @@ bool ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
 void ChunkMap::addToBlockGen(glm::vec3 blockPos, BlockType type) {
     blocksToGen.insert(std::pair<std::vector<int>, BlockType>(std::vector<int>{(int)blockPos.x, (int)blockPos.y, (int)blockPos.z}, type));
 }
+
+std::vector<Entity*>* ChunkMap::collidableNeighborBlocks(glm::vec3 pos) {
+    // Get all 6 neighbors
+
+    std::vector<Entity*>* ret = new std::vector<Entity*>();
+
+    std::vector<glm::vec3> checkPositions = std::vector<glm::vec3>{
+        pos,
+        pos + glm::vec3(1.0f, 0.0f, 0.0f),
+        pos + glm::vec3(-1.0f, 0.0f, 0.0f),
+        pos + glm::vec3(0.0f, 0.0f, 1.0f),
+        pos + glm::vec3(0.0f, 0.0f, -1.0f),
+        pos + glm::vec3(0.0f, 1.0f, 0.0f),
+        pos + glm::vec3(0.0f, -1.0f, 0.0f)
+    };
+
+    for (glm::vec3 v : checkPositions) {
+        BlockType type = getBlock(v);
+        if (Block::collidable(type)) {
+            ret->insert(ret->begin(), Block::createEntity(glm::round(v)));
+        }
+    }
+    
+    return ret;
+}   

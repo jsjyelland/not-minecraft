@@ -9,6 +9,8 @@
 #include <math.h>
 #include <stdio.h>
 
+#include <Entity/Entity.h>
+
 // Note:
 // North is positive x,
 // East is positive z.
@@ -48,9 +50,12 @@ public:
     static bool isSolid(BlockType type);
     static bool isTranslucent(BlockType type);
     static bool isSprite(BlockType type);
+    static bool collidable(BlockType type);
 
     static void constructSpriteMesh(BlockType type, int chunkX, int chunkY, int chunkZ, std::vector<float> &data);
     static void constructMesh(BlockType type, float blockheight, int chunkX, int chunkY, int chunkZ, unsigned int directionMask, std::vector<float> &data);
+
+    static Entity* createEntity(glm::vec3 pos);
 };
 
 #endif
