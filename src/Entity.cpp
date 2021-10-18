@@ -41,3 +41,7 @@ void Entity::accelerate(glm::vec3 accel, float time) {
 glm::vec3 Entity::getPosition() {
     return position;
 }
+
+void Entity::setPosition(glm::vec3 pos) {
+    position = pos;
+}

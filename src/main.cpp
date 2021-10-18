@@ -40,7 +40,7 @@
 #define GRAVITY 30.0f
 #define JUMP_SPEED 10.0f
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 70.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(10.0f, 120.0f, 10.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -173,7 +173,7 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
             BlockType type = chunkMap.getBlock(selectedBlockPos);
 
             if (Block::isBlock(type)) {
-                // player->hotbar.addItem(type);
+                player->hotbar.addItem(type);
                 chunkMap.setBlock(selectedBlockPos, BlockType::air);
                 updateBlockSelection();
             }
@@ -183,9 +183,9 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
         if (blockSelected) {
-            BlockType type = BlockType::dirt;//player->hotbar.use(hotbarPos, 0);
+            BlockType type = player->hotbar.use(hotbarPos, 0);
 
-            if (type != BlockType::none) {
+            if (type != BlockType::air) {
                 
                 glm::vec3 placePos = Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos);
                 if (!Block::createEntity(placePos)->intersects(player)) {
@@ -633,6 +633,12 @@ int main() {
             player->setSpeed(playerSpeed);
             player->move(deltaTime);
 
+            glm::vec3 pos = player->getPosition();
+            if (pos.y < -60.f) {
+                pos.y = 130.0f;
+                player->setPosition(pos);
+            }
+
             cameraPos = player->getPosition() + glm::vec3(0.0f, 0.7f, 0.0f);
 
             if (glm::length(playerSpeed) != 0.0f) {
@@ -770,9 +776,14 @@ int main() {
 
         transform = glm::mat4(1.0f);
         transform = glm::translate(transform, glm::vec3(0.0f, -0.9f, 0.0f));
-        transform = glm::scale(transform, glm::vec3(3.5f * 322.0f / (float)windowWidth, 3.5f * 34.0f / (float)windowHeight, 0));
+        transform = glm::scale(transform, glm::vec3(5.0f * 322.0f / (float)windowWidth, 5.0f * 34.0f / (float)windowHeight, 0));
         hudShader.setMat4("transform", transform);
         hudShader.setInt("tex", 3);
+
+        // // render hotbar items
+        // for (int i = 0; i < 10; i++) {
+
+        // }
 
         glBindVertexArray(hudVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);

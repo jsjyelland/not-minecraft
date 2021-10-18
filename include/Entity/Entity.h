@@ -20,6 +20,7 @@ public:
     void accelerate(glm::vec3 accel, float time);
 
     glm::vec3 getPosition();
+    void setPosition(glm::vec3 pos);
 
 private:
     glm::vec3 position;

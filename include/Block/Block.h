@@ -24,7 +24,6 @@
 #define DIRECTION_ALL 0b111111
 
 enum BlockType {
-    none,
     air,
     grass,
     dirt,
@@ -37,7 +36,7 @@ enum BlockType {
     short_grass,
     wood_planks,
     cobblestone,
-    glass
+    glass,
 };
 
 class Block {

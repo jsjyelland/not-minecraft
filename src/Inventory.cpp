@@ -12,11 +12,19 @@ Inventory::Inventory(unsigned int w, unsigned int h) {
 }
 
 Stack* Inventory::get(unsigned int x, unsigned int y) {
-    return contents[x * width + y];
+    if (x >= width || y >= height) {
+        return NULL;
+    }
+
+    return contents[x * height + y];
 }
 
 bool Inventory::set(unsigned int x, unsigned int y, Stack* val) {
-    contents[x * width + y] = val;
+    if (x >= width || y >= height) {
+        return false;
+    }
+
+    contents[x * height + y] = val;
 
     return true;
 }
@@ -60,6 +68,10 @@ bool Inventory::addItem(BlockType type) {
 BlockType Inventory::use(unsigned int x, unsigned int y) {
     Stack *s = get(x, y);
 
+    if (s == NULL) {
+        return BlockType::air;
+    }
+
     if (s->remove()) {
         if (s->getNum() == 0) {
             delete s;
@@ -69,6 +81,6 @@ BlockType Inventory::use(unsigned int x, unsigned int y) {
 
         return s->getType();
     } else {
-        return BlockType::none;
+        return BlockType::air;
     }
 }
