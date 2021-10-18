@@ -79,7 +79,7 @@ glm::vec3 selectedBlockPos;
 unsigned int hotbarPos = 0;
 
 unsigned int atlas, cubemapTexture;
-unsigned int hotbarTex;
+unsigned int hotbarTex, hotbarSelectTex;
 
 bool cursorShown = false;
 
@@ -406,6 +406,7 @@ int main() {
     stbi_set_flip_vertically_on_load(true);
     atlas = loadTexture("textures/atlas.png");
     hotbarTex = loadTexture("textures/hotbar.png");
+    hotbarSelectTex = loadTexture("textures/hotbar-select.png");
 
     std::vector<std::string> faces{
         "textures/skybox/left.png",
@@ -747,6 +748,8 @@ int main() {
 
         chunkMap.renderChunks(3);
 
+        cursorShader.use();
+
         // Draw selection box around block
         if (blockSelected) {
             glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.001f));
@@ -758,7 +761,6 @@ int main() {
 
         // Draw cursor
         glDepthFunc(GL_ALWAYS); // Make sure the cursor is always drawn
-        cursorShader.use();
 
         glm::mat4 transform = glm::mat4(1.0f);
         transform = glm::scale(transform, glm::vec3(50.0f / (float)windowWidth, 50.0f / (float)windowHeight, 0));
@@ -772,20 +774,58 @@ int main() {
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, hotbarTex);
 
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, hotbarSelectTex);
+
         hudShader.use();
 
         transform = glm::mat4(1.0f);
         transform = glm::translate(transform, glm::vec3(0.0f, -0.9f, 0.0f));
         transform = glm::scale(transform, glm::vec3(5.0f * 322.0f / (float)windowWidth, 5.0f * 34.0f / (float)windowHeight, 0));
         hudShader.setMat4("transform", transform);
+        hudShader.setMat4("texTransform", glm::mat4(1.0f));
         hudShader.setInt("tex", 3);
 
-        // // render hotbar items
-        // for (int i = 0; i < 10; i++) {
-
-        // }
-
         glBindVertexArray(hudVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        hudShader.setInt("tex", 0);
+
+        // render hotbar items
+        for (int i = 0; i < 10; i++) {
+            Stack *s = player->hotbar.get(i, 0);
+            if (s == NULL) {
+                continue;
+            }
+
+            BlockType type = s->getType();
+
+            if (type != BlockType::air) {
+                std::vector<unsigned int> atlasXY = Block::atlasPosXY(Block::atlasMap(type)[0]);
+
+                glm::mat4 texTransform = glm::mat4(1.0f);
+                texTransform = glm::translate(texTransform, glm::vec3((float)atlasXY[0] / 16.0f, (float)atlasXY[1] / 16.0f, 0.0f));
+                texTransform = glm::scale(texTransform, glm::vec3(1/16.0f, 1/16.0f, 1.0f));
+
+                transform = glm::mat4(1.0f);
+                transform = glm::translate(transform, glm::vec3(5.0f * 32.f * (i - 4.5f) / (float)windowWidth, -0.9f, 0.0f));
+                transform = glm::scale(transform, glm::vec3(5.0f * 20.f / (float)windowWidth, 5.0f * 20.0f / (float)windowHeight, 0));
+
+                hudShader.setMat4("transform", transform);
+                hudShader.setMat4("texTransform", texTransform);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+            }
+        }
+
+        transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(5.0f * 32.f * (hotbarPos - 4.5f) / (float)windowWidth, -0.9f, 0.0f));
+        transform = glm::scale(transform, glm::vec3(5.0f * 36.f / (float)windowWidth, 5.0f * 36.0f / (float)windowHeight, 0));
+
+        hudShader.setMat4("transform", transform);
+        hudShader.setMat4("texTransform", glm::mat4(1.0f));
+        hudShader.setInt("tex", 4);
+
         glDrawArrays(GL_TRIANGLES, 0, 6);
         
         glDepthFunc(GL_LESS); // set depth function back to default
