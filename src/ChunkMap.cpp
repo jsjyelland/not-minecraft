@@ -77,12 +77,14 @@ void ChunkMap::renderChunks(unsigned int max) {
 }
 
 BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
-    if (round(blockPos.y) < 0 || round(blockPos.y) >= CHUNK_HEIGHT) {
+    blockPos = glm::round(blockPos);
+
+    if (blockPos.y < 0 || blockPos.y >= CHUNK_HEIGHT) {
         return BlockType::air;
     }
 
-    float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
-    float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
+    float chunkX = floor(blockPos.x / CHUNK_SIZE);
+    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
 
     std::vector<int> chunkPos{(int)chunkX, (int)chunkZ};
 
@@ -96,8 +98,8 @@ BlockType ChunkMap::getBlock(glm::vec3 blockPos) {
 }
 
 bool ChunkMap::setBlock(glm::vec3 blockPos, BlockType type) {
-    float chunkX = floor(round(blockPos.x) / CHUNK_SIZE);
-    float chunkZ = floor(round(blockPos.z) / CHUNK_SIZE);
+    float chunkX = floor(blockPos.x / CHUNK_SIZE);
+    float chunkZ = floor(blockPos.z / CHUNK_SIZE);
 
     std::vector<int> chunkPos{(int)chunkX, (int)chunkZ};
 
@@ -116,24 +118,47 @@ void ChunkMap::addToBlockGen(glm::vec3 blockPos, BlockType type) {
 }
 
 std::vector<Entity*>* ChunkMap::collidableNeighborBlocks(glm::vec3 pos) {
-    // Get all 6 neighbors
+    pos = glm::round(pos);
 
     std::vector<Entity*>* ret = new std::vector<Entity*>();
 
     std::vector<glm::vec3> checkPositions = std::vector<glm::vec3>{
         pos,
         pos + glm::vec3(1.0f, 0.0f, 0.0f),
+        pos + glm::vec3(1.0f, 0.0f, -1.0f),
+        pos + glm::vec3(1.0f, 0.0f, 1.0f),
         pos + glm::vec3(-1.0f, 0.0f, 0.0f),
-        pos + glm::vec3(0.0f, 0.0f, 1.0f),
+        pos + glm::vec3(-1.0f, 0.0f, -1.0f),
+        pos + glm::vec3(-1.0f, 0.0f, 1.0f),
         pos + glm::vec3(0.0f, 0.0f, -1.0f),
+        pos + glm::vec3(0.0f, 0.0f, 1.0f),
+
+        pos + glm::vec3(1.0f, 1.0f, 0.0f),
+        pos + glm::vec3(1.0f, 1.0f, -1.0f),
+        pos + glm::vec3(1.0f, 1.0f, 1.0f),
+        pos + glm::vec3(-1.0f, 1.0f, 0.0f),
+        pos + glm::vec3(-1.0f, 1.0f, -1.0f),
+        pos + glm::vec3(-1.0f, 1.0f, 1.0f),
         pos + glm::vec3(0.0f, 1.0f, 0.0f),
-        pos + glm::vec3(0.0f, -1.0f, 0.0f)
+        pos + glm::vec3(0.0f, 1.0f, -1.0f),
+        pos + glm::vec3(0.0f, 1.0f, 1.0f),
+
+        pos + glm::vec3(1.0f, -1.0f, 0.0f),
+        pos + glm::vec3(1.0f, -1.0f, -1.0f),
+        pos + glm::vec3(1.0f, -1.0f, 1.0f),
+        pos + glm::vec3(-1.0f, -1.0f, 0.0f),
+        pos + glm::vec3(-1.0f, -1.0f, -1.0f),
+        pos + glm::vec3(-1.0f, -1.0f, 1.0f),
+        pos + glm::vec3(0.0f, -1.0f, 0.0f),
+        pos + glm::vec3(0.0f, -1.0f, -1.0f),
+        pos + glm::vec3(0.0f, -1.0f, 1.0f),
     };
 
     for (glm::vec3 v : checkPositions) {
         BlockType type = getBlock(v);
+        
         if (Block::collidable(type)) {
-            ret->insert(ret->begin(), Block::createEntity(glm::round(v)));
+            ret->insert(ret->begin(), Block::createEntity(v));
         }
     }
     

@@ -1,10 +1,19 @@
 #include <Entity/Entity.h>
 
-bool Entity::intersects(Entity &other) {
-    glm::vec3 min = position + (size / 2.0f);
+bool Entity::intersects(Entity *other) {
+    glm::vec3 min = position - (size / 2.0f);
     glm::vec3 max = position + (size / 2.0f);
-    glm::vec3 omin = other.position + (other.size / 2.0f);
-    glm::vec3 omax = other.position + (other.size / 2.0f);
+    glm::vec3 omin = other->position - (other->size / 2.0f);
+    glm::vec3 omax = other->position + (other->size / 2.0f);
+
+    return glm::all(glm::greaterThan(max, omin) && glm::lessThan(min, omax));
+}
+
+bool Entity::intersectsAt(Entity *other, glm::vec3 proposedPosition) {
+    glm::vec3 min = proposedPosition - (size / 2.0f);
+    glm::vec3 max = proposedPosition + (size / 2.0f);
+    glm::vec3 omin = other->position - (other->size / 2.0f);
+    glm::vec3 omax = other->position + (other->size / 2.0f);
 
     return glm::all(glm::greaterThan(max, omin) && glm::lessThan(min, omax));
 }

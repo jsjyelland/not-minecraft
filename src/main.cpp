@@ -38,7 +38,7 @@
 #define WINDOW_HEIGHT 1000
 
 #define GRAVITY 30.0f
-#define JUMP_SPEED 7.0f
+#define JUMP_SPEED 10.0f
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 70.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -57,7 +57,7 @@ float yaw = -90.f;
 float lastX = WINDOW_WIDTH / 2;
 float lastY = WINDOW_HEIGHT / 2;
 
-float fov = 80.0f;
+float fov = 90.0f;
 
 bool firstMouse = true;
 
@@ -177,8 +177,11 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
         if (blockSelected) {
-            chunkMap.setBlock(Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos), blockToPlace);
-            updateBlockSelection();
+            glm::vec3 placePos = Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos);
+            if (!Block::createEntity(placePos)->intersects(player)) {
+                chunkMap.setBlock(placePos, blockToPlace);
+                updateBlockSelection();
+            }   
         }
     }
 }
@@ -227,7 +230,18 @@ void processInput(GLFWwindow *window) {
 
     #if !FLYING
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            movementDir = glm::normalize(cameraUp + movementDir);
+            // Get block below player
+
+            glm::vec3 testPos = glm::round(player->getPosition() - glm::vec3(0.0f, 0.01f, 0.0f));
+            
+            for (Entity* e : *chunkMap.collidableNeighborBlocks(testPos)) {
+                if (player->intersectsAt(e, testPos)) {
+                    movementDir += glm::normalize(cameraUp);
+                    break;
+                }
+
+                delete e;
+            }
         }
     #else
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
@@ -541,29 +555,56 @@ int main() {
         processInput(window);
         
         #if !FLYING
-            glm::vec3 playerSpeed = glm::vec(0.0f);
+            glm::vec3 playerSpeed = glm::vec3(0.0f);
+            
+            playerSpeed += glm::vec3(0.0f, -GRAVITY, 0.0f) * deltaTime + glm::vec3(0.0f, player->getSpeed().y, 0.0f);
 
-            if (Block::isSolid(chunkMap.getBlock(player->getPosition() + glm::vec3(0, -1, 0)))) {
-                playerSpeed += glm::vce3(0.0f;
+            if (movementDir.y != 0.0f) {
+                playerSpeed = glm::vec3(0.0f, movementDir.y, 0.0f) * JUMP_SPEED;
             }
             
-            glm::vec3(0.0f, movementDir.y, 0.0f) * JUMP_SPEED
+            playerSpeed += glm::vec3(movementDir.x, 0.0f, movementDir.z) * CAMERA_SPEED;
 
-            for (Entity* e : *chunkMap.collidableNeighborBlocks(player->nextPosition(deltaTime, movementDir))) {
-                if 
+            glm::vec3 nextPos = player->nextPosition(deltaTime, glm::vec3(playerSpeed.x, 0.0f, 0.0f)) + glm::sign(playerSpeed) * glm::vec3(0.05f, 0.0f, 0.0f);
+
+            for (Entity* e : *chunkMap.collidableNeighborBlocks(nextPos)) {
+                if (player->intersectsAt(e, nextPos)) {
+                    playerSpeed.x = 0;
+                    break;
+                }
+
+                delete e;
             }
 
-             else {
-                vertSpeed -= GRAVITY * deltaTime;
+            nextPos = player->nextPosition(deltaTime, glm::vec3(0.0f, playerSpeed.y, 0.0f)) + glm::sign(playerSpeed) * glm::vec3(0.0f, 0.05f, 0.0f);
+
+            for (Entity* e : *chunkMap.collidableNeighborBlocks(nextPos)) {
+                if (player->intersectsAt(e, nextPos)) {
+                    playerSpeed.y = 0;
+                    break;
+                }
+
+                delete e;
             }
 
-            cameraPos += cameraUp * vertSpeed * deltaTime;
+            nextPos = player->nextPosition(deltaTime, glm::vec3(0.0f, 0.0f, playerSpeed.z)) + glm::sign(playerSpeed) * glm::vec3(0.0f, 0.0f, 0.05f);
 
-            if (cameraPos.y < -60.0f) {
-                cameraPos.y = 128.0f;
+            for (Entity* e : *chunkMap.collidableNeighborBlocks(nextPos)) {
+                if (player->intersectsAt(e, nextPos)) {
+                    playerSpeed.z = 0;
+                    break;
+                }
+
+                delete e;
             }
+
+            player->setSpeed(playerSpeed);
+            player->move(deltaTime);
+
+            cameraPos = player->getPosition() + glm::vec3(0.0f, 0.7f, 0.0f);
         #endif
 
+        // Drawing
         
         glClearColor(0.3f, 0.6f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -571,7 +612,7 @@ int main() {
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), (float)windowWidth / (float)windowHeight, 0.1f, 500.0f);
+        projection = glm::perspective(glm::radians(fov), (float)windowWidth / (float)windowHeight, 0.01f, 500.0f);
 
         // Draw skybox
 

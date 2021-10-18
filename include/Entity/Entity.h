@@ -9,7 +9,8 @@ public:
         speed = glm::vec3(0.0f);
     }
 
-    bool intersects(Entity &other);
+    bool intersects(Entity *other);
+    bool intersectsAt(Entity *other, glm::vec3 proposedPosition);
 
     glm::vec3 getSpeed();
     void setSpeed(glm::vec3 aSpeed);
