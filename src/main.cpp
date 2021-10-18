@@ -35,7 +35,7 @@
 #define RENDER_DISTANCE 12
 
 #define WINDOW_WIDTH 1600
-#define WINDOW_HEIGHT 1000
+#define WINDOW_HEIGHT 800
 
 #define GRAVITY 30.0f
 #define JUMP_SPEED 10.0f
@@ -69,16 +69,17 @@ float windowHeight = WINDOW_HEIGHT;
 ChunkMap chunkMap;
 
 GLFWwindow *window;
-unsigned int skyboxVAO, cursorVAO, selectionVAO;
+unsigned int skyboxVAO, cursorVAO, selectionVAO, hudVAO;
 
-Shader shader, cursorShader, skyboxShader;
+Shader shader, cursorShader, skyboxShader, hudShader;
 
 bool blockSelected = false;
 glm::vec3 selectedBlockPos;
 
-BlockType blockToPlace = BlockType::cobblestone;
+unsigned int hotbarPos = 0;
 
 unsigned int atlas, cubemapTexture;
+unsigned int hotbarTex;
 
 bool cursorShown = false;
 
@@ -169,19 +170,29 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mode) {
 
         // Break block
         if (blockSelected) {
-            chunkMap.setBlock(selectedBlockPos, BlockType::air);
-            updateBlockSelection();
+            BlockType type = chunkMap.getBlock(selectedBlockPos);
+
+            if (Block::isBlock(type)) {
+                // player->hotbar.addItem(type);
+                chunkMap.setBlock(selectedBlockPos, BlockType::air);
+                updateBlockSelection();
+            }
         }
     }
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         // Place block
         if (blockSelected) {
-            glm::vec3 placePos = Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos);
-            if (!Block::createEntity(placePos)->intersects(player)) {
-                chunkMap.setBlock(placePos, blockToPlace);
-                updateBlockSelection();
-            }   
+            BlockType type = BlockType::dirt;//player->hotbar.use(hotbarPos, 0);
+
+            if (type != BlockType::none) {
+                
+                glm::vec3 placePos = Block::blockFacePos(cameraPos, cameraFront, selectedBlockPos);
+                if (!Block::createEntity(placePos)->intersects(player)) {
+                    chunkMap.setBlock(placePos, type);
+                    updateBlockSelection();
+                }   
+            }
         }
     }
 }
@@ -232,7 +243,7 @@ void processInput(GLFWwindow *window) {
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
             // Get block below player
 
-            glm::vec3 testPos = glm::round(player->getPosition() - glm::vec3(0.0f, 0.01f, 0.0f));
+            glm::vec3 testPos = glm::round(player->getPosition() - glm::vec3(0.0f, 0.005f, 0.0f));
             
             for (Entity* e : *chunkMap.collidableNeighborBlocks(testPos)) {
                 if (player->intersectsAt(e, testPos)) {
@@ -260,19 +271,19 @@ void processInput(GLFWwindow *window) {
     }
     
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-        blockToPlace = BlockType::cobblestone;
+        hotbarPos = 0;
     }
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-        blockToPlace = BlockType::wood;
+        hotbarPos = 1;
     }
     if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
-        blockToPlace = BlockType::wood_planks;
+        hotbarPos = 2;
     }
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
-        blockToPlace = BlockType::glass;
+        hotbarPos = 3;
     }
     if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) {
-        blockToPlace = BlockType::stone;
+        hotbarPos = 4;
     }
 }
 
@@ -383,6 +394,7 @@ int main() {
     shader = Shader("shaders/shader.vs", "shaders/shader.fs");
     skyboxShader = Shader("shaders/skybox.vs", "shaders/skybox.fs");
     cursorShader = Shader("shaders/cursor.vs", "shaders/cursor.fs");
+    hudShader = Shader("shaders/hud.vs", "shaders/hud.fs");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -393,6 +405,7 @@ int main() {
 
     stbi_set_flip_vertically_on_load(true);
     atlas = loadTexture("textures/atlas.png");
+    hotbarTex = loadTexture("textures/hotbar.png");
 
     std::vector<std::string> faces{
         "textures/skybox/left.png",
@@ -536,6 +549,25 @@ int main() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 
+    float hudVertices[] = {
+        -0.5f, -0.5f,
+        0.5f, 0.5f,
+        -0.5f, 0.5f,
+
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        0.5f, 0.5f,
+    };
+
+    unsigned int hudVBO;
+    glGenVertexArrays(1, &hudVAO);
+    glGenBuffers(1, &hudVBO);
+    glBindVertexArray(hudVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, hudVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(hudVertices), &hudVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
     // Render loop
 
     while (!glfwWindowShouldClose(window)) {
@@ -597,11 +629,15 @@ int main() {
 
                 delete e;
             }
-
+            
             player->setSpeed(playerSpeed);
             player->move(deltaTime);
 
             cameraPos = player->getPosition() + glm::vec3(0.0f, 0.7f, 0.0f);
+
+            if (glm::length(playerSpeed) != 0.0f) {
+                updateBlockSelection();
+            }            
         #endif
 
         // Drawing
@@ -705,6 +741,15 @@ int main() {
 
         chunkMap.renderChunks(3);
 
+        // Draw selection box around block
+        if (blockSelected) {
+            glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.001f));
+            cursorShader.setMat4("transform", selectionTransform);
+
+            glBindVertexArray(selectionVAO);
+            glDrawArrays(GL_LINES, 0, 24);
+        }
+
         // Draw cursor
         glDepthFunc(GL_ALWAYS); // Make sure the cursor is always drawn
         cursorShader.use();
@@ -715,17 +760,25 @@ int main() {
 
         glBindVertexArray(cursorVAO);
         glDrawArrays(GL_LINES, 0, 4);
+
+        // Draw HUD
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, hotbarTex);
+
+        hudShader.use();
+
+        transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.0f, -0.9f, 0.0f));
+        transform = glm::scale(transform, glm::vec3(3.5f * 322.0f / (float)windowWidth, 3.5f * 34.0f / (float)windowHeight, 0));
+        hudShader.setMat4("transform", transform);
+        hudShader.setInt("tex", 3);
+
+        glBindVertexArray(hudVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
         glDepthFunc(GL_LESS); // set depth function back to default
 
-        // Draw selection box around block
-        if (blockSelected) {
-            glm::mat4 selectionTransform = glm::scale(glm::translate(projection * view, selectedBlockPos), glm::vec3(1.001f));
-            cursorShader.setMat4("transform", selectionTransform);
-
-            glBindVertexArray(selectionVAO);
-            glDrawArrays(GL_LINES, 0, 24);
-        }
-        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

@@ -24,6 +24,7 @@
 #define DIRECTION_ALL 0b111111
 
 enum BlockType {
+    none,
     air,
     grass,
     dirt,
