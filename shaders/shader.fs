@@ -42,12 +42,14 @@ uniform Material material;
 
 uniform vec3 viewPos;
 
+vec4 calcFog(vec3 viewFragPos, vec4 color);
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main() {
    vec3 norm = normalize(Normal);
-   vec3 viewDir = normalize(viewPos - FragPos);
+   vec3 viewFragPos = viewPos - FragPos;
+   vec3 viewDir = normalize(viewFragPos);
 
    vec4 result = vec4(calcDirLight(dirLight, norm, viewDir), texture(material.diffuse, TexCoords).a);
    
@@ -66,6 +68,7 @@ void main() {
 
    float gamma = 2.2;
    FragColor = vec4(pow(result.xyz, vec3(1.0/gamma)) - 0.2, result.w);
+   FragColor = calcFog(viewFragPos, FragColor);
 }
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
@@ -83,6 +86,16 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
    return ambient + diffuse + specular;
+}
+
+vec4 calcFog(vec3 viewFragPos, vec4 color) {
+   float dist = length(viewFragPos);
+
+   if (dist > 200) {
+      return color * vec4(0.7, 0.7, 0.7, 1.0);
+   } else {
+      return color;
+   }
 }
 
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
